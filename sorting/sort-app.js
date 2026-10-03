@@ -54,7 +54,10 @@
   // Back to the unsorted array with the chosen algorithm.
   function reset(msg) {
     const A = S.ALGOS[prefs.algo];
-    T.steps = [S.idle(items, prefs.algo, msg || `${A.name}: ${A.idea} Press Sort to start.`)];
+    const intro = prefs.algo === 'merge' && prefs.mergeMode === 'trust'
+      ? 'Merge sort: split the array, let magic sort both halves, watch the merge — then find out what the magic was. Press Sort.'
+      : `${A.name}: ${A.idea} Press Sort to start.`;
+    T.steps = [S.idle(items, prefs.algo, msg || intro)];
     T.cur = 0;
     T.anim = null;
     T.playing = false;
@@ -167,10 +170,11 @@
 
   let shownAlgo;
   function renderPseudo(step) {
-    if (step.algo !== shownAlgo) {
-      shownAlgo = step.algo;
+    const code = step.code || S.ALGOS[step.algo].code;
+    if (code !== shownAlgo) {
+      shownAlgo = code;
       el.pseudo.replaceChildren();
-      S.ALGOS[step.algo].code.forEach((line) => {
+      code.forEach((line) => {
         const div = document.createElement('div');
         div.className = 'ln';
         const [code, comment] = line.split('▹');
@@ -222,7 +226,7 @@
     savePrefs();
     document.querySelectorAll('#segAlgo button').forEach((b) => b.classList.toggle('on', b.dataset.v === algo));
     syncMerge();
-    reset(`${S.ALGOS[algo].name}: ${S.ALGOS[algo].idea} Same starting array as before — press Sort.`);
+    reset(algo === 'merge' && prefs.mergeMode === 'trust' ? null : `${S.ALGOS[algo].name}: ${S.ALGOS[algo].idea} Same starting array as before — press Sort.`);
   }
 
   function newArray() {
@@ -258,7 +262,7 @@
     savePrefs();
     syncMerge();
     reset(prefs.mergeMode === 'trust'
-      ? 'Trust the recursion: split the array, assume the two recursive calls return sorted halves, and watch the merge step in detail. Press Sort.'
+      ? 'Magic first: split the array, let magic sort both halves, watch the merge in detail — then find out what the magic was. Press Sort.'
       : 'Full trace: follow every recursive call down to single elements, then every merge on the way back up. Press Sort.');
   }));
 

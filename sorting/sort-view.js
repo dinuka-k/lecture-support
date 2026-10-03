@@ -214,12 +214,13 @@
       b.calls.forEach((call) => {
         const x0 = g.xi(call.lo) - 6, x1 = g.xi(call.hi) + g.bw + 6;
         const y = -CALLS_H + 4, h = 34;
-        const col = call.state === 'sorted' ? c.good : call.state === 'running' ? c.accent : c.muted;
-        const soft = call.state === 'sorted' ? c.goodSoft : call.state === 'running' ? c.accentSoft : c.panel;
+        const st = call.state;
+        const col = st === 'magic-done' ? c.good : st === 'magic' ? c.violet : st === 'reveal' ? c.accent : c.muted;
+        const soft = st === 'magic-done' ? c.goodSoft : st === 'magic' ? c.violetSoft : st === 'reveal' ? c.accentSoft : c.panel;
         roundRect(ctx, x0, y, x1 - x0, h, 8);
         ctx.fillStyle = soft;
         ctx.fill();
-        ctx.setLineDash(call.state === 'pending' ? [5, 4] : []);
+        ctx.setLineDash(call.state === 'magic-pending' ? [5, 4] : []);
         ctx.lineWidth = 2;
         ctx.strokeStyle = col;
         ctx.stroke();
@@ -228,7 +229,7 @@
         ctx.font = `750 15px ${this.font}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const label = `mergeSort(${call.lo}, ${call.hi})` + (call.state === 'sorted' ? '  ✓ sorted' : call.state === 'running' ? '  — trust it' : '');
+        const label = { 'magic-pending': '?', magic: '✨ magic…', 'magic-done': '✨ sorted by magic', reveal: `the magic = mergeSort(${call.lo}, ${call.hi})` }[call.state];
         ctx.fillText(label, (x0 + x1) / 2, y + h / 2 + 0.5);
       });
     }

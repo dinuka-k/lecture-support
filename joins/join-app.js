@@ -50,7 +50,7 @@
   };
 
   const lanes = {};
-  el.board.querySelectorAll('.lane').forEach((ln) => {
+  el.board.querySelectorAll('.lane[data-lane]').forEach((ln) => {
     const parts = {};
     ln.querySelectorAll('[data-k]').forEach((n) => { parts[n.dataset.k] = n; });
     lanes[ln.dataset.lane] = { root: ln, parts, shown: {} };
@@ -278,11 +278,13 @@
     ln.parts[key].textContent = text;
   }
 
-  const total = (s) => s.cmp + s.hash + s.sort;
+  const total = (s) => s.cmp + s.hash + s.sort + s.look;
   const floorInt = (v) => fmtInt(Math.floor(v + 1e-6));
+  // The extra work each algorithm does besides comparing join keys.
   const EXTRA = {
-    nl: { key: null, sub: 'no extra work' },
-    hash: { key: 'hash', sub: 'hash computations' },
+    nl: { key: null, sub: 'none' },
+    inl: { key: 'look', sub: 'index lookups' },
+    hash: { key: 'hash', sub: 'hashes' },
     merge: { key: 'sort', sub: 'sort comparisons' },
   };
 
@@ -301,7 +303,6 @@
       ln.root.classList.toggle('empty', !x);
       ln.root.classList.toggle('active', !!x && b.active === k && !x.lane.done);
       if (!x) {
-        setText(ln, 'sub', 'not run yet');
         ['cmp', 'extra', 'total'].forEach((key) => setText(ln, key, '–'));
         setText(ln, 'extraSub', EXTRA[k].sub);
         ln.parts.bar.style.width = '0';
@@ -309,10 +310,8 @@
         return;
       }
       const s = x.s;
-      const how = k === 'nl' ? 'every pair' : k === 'hash' ? `${x.lane.B} buckets` : 'sort, then merge';
-      setText(ln, 'sub', `${how} · ${floorInt(s.out)} rows out`);
       setText(ln, 'cmp', floorInt(s.cmp));
-      setText(ln, 'extra', EXTRA[k].key ? floorInt(s[EXTRA[k].key]) : '0');
+      setText(ln, 'extra', EXTRA[k].key ? floorInt(s[EXTRA[k].key]) : '–');
       setText(ln, 'extraSub', EXTRA[k].sub);
       setText(ln, 'total', floorInt(total(s)));
       ln.parts.bar.style.width = `${(total(s) / max) * 100}%`;
@@ -340,6 +339,7 @@
     const est = M.estimate(n, m);
     const rows = [
       ['nl', 'Nested loop', est.nl],
+      ['inl', 'Index nested loop', est.inl],
       ['hash', 'Hash join', est.hash],
       ['merge', 'Merge join (sort + merge)', est.merge],
       ['sorted', 'Merge join, already sorted', est.sorted],
@@ -349,14 +349,15 @@
       `<div class="sc-row sc-${k}"><span class="sc-name">${name}</span>` +
       `<span class="sc-val"><b>${fmtInt(ops)}</b> ops · ≈${fmtMs((ops * M.OP_NS) / 1e6)}</span>` +
       `<div class="sc-bar"><i style="width:${Math.max(0.6, (ops / max) * 100)}%"></i></div></div>`).join('');
-    const best = Math.min(est.hash, est.merge);
-    if (est.nl <= best) {
-      el.scaleVerdict.className = 'scale-verdict warn';
-      el.scaleVerdict.textContent = 'One table is tiny: a nested loop is as good as anything here.';
-    } else {
-      el.scaleVerdict.className = 'scale-verdict';
-      el.scaleVerdict.textContent = `Hash join: ≈${timesFaster(est.nl, est.hash)}× less work than a nested loop`;
-    }
+    // The cheapest of the four (the pre-sorted merge is a what-if, not a contender).
+    const win = ['nl', 'inl', 'hash', 'merge'].reduce((a, k) => (est[k] < est[a] ? k : a), 'nl');
+    el.scaleVerdict.className = win === 'nl' ? 'scale-verdict warn' : 'scale-verdict';
+    el.scaleVerdict.textContent = {
+      nl: 'One table is tiny: a plain nested loop is as good as anything here.',
+      inl: `Index nested loop wins: ${fmtInt(n)} quick lookups beat building a hash table on ${fmtInt(m)} rows (≈${timesFaster(est.hash, est.inl)}× less work).`,
+      hash: `Hash join wins: ≈${timesFaster(est.nl, est.hash)}× less work than a nested loop, ≈${timesFaster(est.inl, est.hash)}× less than index lookups.`,
+      merge: `Merge join wins: ≈${timesFaster(est.nl, est.merge)}× less work than a nested loop.`,
+    }[win];
   }
 
   // Free space for the scene (excludes the caption, the scoreboard and the author watermark above it).
@@ -378,7 +379,7 @@
 
   // ---------- Commands ----------
 
-  const RUN = { nl: () => engine.runNested(), hash: () => engine.runHash(), merge: () => engine.runMerge() };
+  const RUN = { nl: () => engine.runNested(), inl: () => engine.runIndexNested(), hash: () => engine.runHash(), merge: () => engine.runMerge() };
 
   function run() {
     const steps = RUN[prefs.algo]();
@@ -386,7 +387,7 @@
   }
 
   function compareAll() {
-    queue('Compare all', [...engine.runNested(), ...engine.runHash(), ...engine.runMerge()]);
+    queue('Compare all', [...engine.runNested(), ...engine.runIndexNested(), ...engine.runHash(), ...engine.runMerge()]);
   }
 
   function tour() {
@@ -533,8 +534,9 @@
       case 'End': toEnd(); break;
       case 'Enter': case 'r': case 'R': run(); break;
       case '1': case 'n': case 'N': setAlgo('nl'); break;
-      case '2': case 'h': case 'H': setAlgo('hash'); break;
-      case '3': case 'm': case 'M': setAlgo('merge'); break;
+      case '2': case 'i': case 'I': setAlgo('inl'); break;
+      case '3': case 'h': case 'H': setAlgo('hash'); break;
+      case '4': case 'm': case 'M': setAlgo('merge'); break;
       case 'c': case 'C': compareAll(); break;
       case 'd': case 'D': newData(); break;
       case 't': case 'T': tour(); break;

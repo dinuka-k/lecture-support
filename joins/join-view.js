@@ -4,7 +4,8 @@
  * The scene is drawn in a fixed-width "world" that is scaled to fit the canvas:
  * the students table on the left, a matrix of every (student, department) pair
  * next to it, the join engine in the middle (SQL, the comparison being made and
- * each algorithm's own machinery), and the departments table above the result
+ * each algorithm's own machinery: loops, the index, buckets or sorted lists), and
+ * the departments table above the result
  * on the right. draw() blends two recorded steps, so comparisons light up one
  * after another, rows slide while they are sorted and joined rows fly into the
  * result.
@@ -12,7 +13,7 @@
 (function (global) {
   'use strict';
 
-  const { cellKey } = global.JoinModel;
+  const { cellKey, plural } = global.JoinModel;
 
   // ---------- World geometry ----------
 
@@ -142,6 +143,7 @@
 
     hue(type) {
       const c = this.c;
+      if (type === 'inl') return [c.accent, c.accentSoft];
       return type === 'nl' ? [c.orange, c.orangeSoft] : type === 'hash' ? [c.violet, c.violetSoft] : type === 'merge' ? [c.teal, c.tealSoft] : [c.ink, c.panel2];
     }
 
@@ -210,7 +212,7 @@
     // src = { a: step | null, b: step, p: 0..1, fwd: bool } — blend from step a to step b.
     draw(src, now, animating) {
       this.now = now;
-      if (!animating && !this.dirty && !src.b.spot) return;
+      if (!animating && !this.dirty && !src.b.spot && !src.b.fetch) return;
       this.dirty = false;
       if (!this.t) return;
       this.paint(src, animating);
@@ -234,7 +236,7 @@
       const prevLen = live && sameRun ? a.result.length : b.result.length;
       const results = b.result.map((r, k) => {
         if (k < prevLen) return { r, k, f: 1, glow: 0 };
-        const idx = b.seq ? b.seq.items.findIndex((it) => it.si === r.si && it.di === r.di) : -1;
+        const idx = b.seq ? b.seq.items.findIndex((it) => it.si === r.si && it.di === r.di && it.res === 'yes') : -1;
         const at = idx >= 0 ? revealAt(b.seq, idx) : 0.4;
         return { r, k, f: clamp((p - at) / 0.22, 0, 1), glow: clamp(1 - (p - at - 0.22) / 0.5, 0, 1) };
       });
@@ -409,11 +411,12 @@
         ctx.lineTo(x, y + s);
         ctx.lineTo(x + s * 0.7, y + s * 0.3);
       } else {
-        ctx.moveTo(x - s, y);
-        ctx.lineTo(x + s, y);
-        ctx.moveTo(x + s * 0.3, y - s * 0.7);
-        ctx.lineTo(x + s, y);
-        ctx.lineTo(x + s * 0.3, y + s * 0.7);
+        const dir = v === 'left' ? -1 : 1; // 'left' or 'right'
+        ctx.moveTo(x - s * dir, y);
+        ctx.lineTo(x + s * dir, y);
+        ctx.moveTo(x + s * 0.3 * dir, y - s * 0.7);
+        ctx.lineTo(x + s * dir, y);
+        ctx.lineTo(x + s * 0.3 * dir, y + s * 0.7);
       }
       ctx.stroke();
       ctx.lineCap = 'butt';
@@ -497,7 +500,8 @@
     studentSub(b) {
       const t = this.t;
       switch (b.run.type) {
-        case 'nl': return 'outer loop';
+        case 'nl':
+        case 'inl': return 'outer loop';
         case 'hash': return 'probe side';
         case 'merge': return isSorted(b.sOrder.map((i) => t.students[i].key)) && b.kind !== 'plan' ? 'sorted by dept' : 'not sorted yet';
         default: return `${t.n} rows`;
@@ -654,7 +658,7 @@
       const WS = L.WS;
       this.card(WS, 'join engine', '', c.ink);
       const type = b.run.type;
-      if (type === 'nl' || type === 'hash' || type === 'merge') {
+      if (type === 'nl' || type === 'inl' || type === 'hash' || type === 'merge') {
         const [col, soft] = this.hue(type);
         this.pill(b.run.lane === 'hash' ? `Hash join · ${b.run.B} buckets` : b.run.label, WS.x + WS.w - 18, WS.y + 15, col, soft, 'right');
       }
@@ -679,6 +683,7 @@
 
       this.paintPanel(F);
       if (type === 'nl') this.paintNL(F);
+      else if (type === 'inl') this.paintIndexNL(F);
       else if (type === 'hash') this.paintHash(F);
       else if (type === 'merge') this.paintMerge(F);
       else this.paintMenu(F);
@@ -695,6 +700,11 @@
       if (F.live && b.kind === 'merge' && F.p < b.seq.t0) {
         const it = b.seq.items[0];
         return { text: `${t.students[it.si].key} ? ${t.depts[it.di].key}`, sub: 'compare s.dept with d.id' };
+      }
+      if (F.live && b.kind === 'lookup') {
+        const key = t.students[b.sCur].key;
+        if (!F.cur) return { text: `find ${key}`, sub: 'start at the root of the index' };
+        return { text: F.cur.text, sub: F.cur.note, verdict: F.cur.res === 'yes' ? 'yes' : F.cur.dir };
       }
       if (F.live && F.cur && b.kind !== 'merge') {
         const st = t.students[F.cur.si], d = t.depts[F.cur.di];
@@ -785,6 +795,168 @@
       ctx.font = `500 13.5px ${this.font}`;
       ctx.fillStyle = c.muted;
       this.fitText(`${t.n} students × ${t.m} departments: every pair is compared`, box.x + 18, box.y + 98, box.w - 36);
+    }
+
+    // Index nested loop: the outer loop over students, and for each one a descent
+    // through the B+ tree on departments.id (root → one leaf → one row).
+    paintIndexNL(F) {
+      const { ctx, c, L, t } = this;
+      const b = F.b, A = L.AREA;
+      const [col, soft] = this.hue('inl');
+
+      this.areaLabel('outer loop · students', A.x, A.y + 10);
+      const g1 = this.strip(A.y + 22, Math.max(t.n, t.m));
+      t.students.forEach((st) => {
+        const mk = F.mark(st.i);
+        const hl = b.sCur === st.i ? (F.cur && F.cur.res === 'yes' ? 'good' : 'warn') : null;
+        this.keyChip(this.chipAt(g1, F.sPos(st.i)), st.key, this.chipStyle(hl, mk && mk.alpha > 0.5 ? mk.res : null));
+      });
+      if (b.sCur >= 0) this.pointer(this.chipAt(g1, F.sPos(b.sCur)), 's', col);
+
+      this.areaLabel('index on departments.id · B+ tree', A.x, A.y + 110);
+      const G = this.indexGeom();
+      const { root, leaves } = t.index;
+      const seen = F.rv ? F.rv.items : [];
+      const leafOn = seen.find((it) => it.node === 'leaf');
+      const rootDone = seen.filter((it) => it.node === 'root').length;
+      const target = leafOn ? leafOn.leaf : null;
+
+      // Edges root → leaves, labelled with the key range each leaf holds.
+      leaves.forEach((lf, i) => {
+        const from = G.childAt(i), to = G.leaf(i);
+        const on = target === i;
+        ctx.strokeStyle = on ? col : c.lineStrong;
+        ctx.lineWidth = on ? 3 : 1.5;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.bezierCurveTo(from.x, from.y + 22, to.x + to.w / 2, to.y - 24, to.x + to.w / 2, to.y);
+        ctx.stroke();
+        const last = i === root.keys.length;
+        const range = i === 0 ? `< ${root.keys[0]}` : last ? `≥ ${root.keys[i - 1]}` : `${root.keys[i - 1]}–${root.keys[i] - 1}`;
+        ctx.font = `700 13px ${this.mono}`;
+        ctx.fillStyle = on ? col : c.muted;
+        ctx.textAlign = i === 0 ? 'right' : last ? 'left' : 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(range, from.x + (i === 0 ? -12 : last ? 12 : 0), from.y + (i === 0 || last ? 10 : 30));
+        ctx.textAlign = 'left';
+      });
+
+      // Root
+      const R = G.root;
+      roundRect(ctx, R.x, R.y, R.w, R.h, 9);
+      ctx.fillStyle = c.panel;
+      ctx.fill();
+      ctx.lineWidth = rootDone && !leafOn ? 2.5 : 1.5;
+      ctx.strokeStyle = rootDone && !leafOn ? col : c.lineStrong;
+      ctx.stroke();
+      root.keys.forEach((k, i) => {
+        const done = seen.find((it) => it.node === 'root' && it.ki === i);
+        const on = F.cur && F.cur.node === 'root' && F.cur.ki === i;
+        this.keyChip(G.rootKey(i), k, on ? { fill: c.warnSoft, stroke: c.warn, color: c.ink } : done ? { fill: soft, color: col } : { fill: c.keyBg, color: c.ink });
+      });
+      ctx.font = `700 11px ${this.font}`;
+      ctx.fillStyle = c.muted;
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ROOT', R.x - 40, R.y + R.h / 2);
+
+      // Leaves: key → row in the departments table.
+      leaves.forEach((lf, i) => {
+        const r = G.leaf(i);
+        const on = target === i;
+        roundRect(ctx, r.x, r.y, r.w, r.h, 9);
+        ctx.fillStyle = on ? soft : c.panel;
+        ctx.fill();
+        ctx.lineWidth = on ? 2.5 : 1.5;
+        ctx.strokeStyle = on ? col : c.lineStrong;
+        ctx.stroke();
+        lf.entries.forEach((en, j) => {
+          const it = seen.find((x) => x.node === 'leaf' && x.leaf === i && x.ki === j);
+          const cur = F.cur && F.cur.node === 'leaf' && F.cur.leaf === i && F.cur.ki === j;
+          const hl = cur ? (F.cur.res === 'yes' ? 'good' : 'warn') : it && it.res === 'yes' ? 'good' : null;
+          this.leafEntry(G.entry(i, j), en, this.chipStyle(hl, it ? it.res : null));
+        });
+      });
+      ctx.font = `700 11px ${this.font}`;
+      ctx.fillStyle = c.muted;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      ctx.fillText('LEAVES', A.x, G.leaf(0).y - 10);
+
+      // Counter: a few comparisons per student instead of m.
+      const box = { x: A.x, y: A.y + 290, w: A.w, h: 76 };
+      roundRect(ctx, box.x, box.y, box.w, box.h, 12);
+      ctx.fillStyle = c.panel2;
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = c.line;
+      ctx.stroke();
+      const cmp = b.stats.cmp - (b.seq ? b.seq.items.length : 0) + seen.length;
+      const looks = b.stats.look - (b.kind === 'lookup' && F.live && F.p < 0.95 ? 1 : 0);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = `750 28px ${this.font}`;
+      ctx.fillStyle = col;
+      ctx.fillText(String(cmp), box.x + 18, box.y + 34);
+      const tw = ctx.measureText(String(cmp)).width;
+      ctx.font = `600 15px ${this.font}`;
+      ctx.fillStyle = c.ink2;
+      ctx.fillText(`comparisons in ${plural(Math.max(0, looks), 'lookup')}`, box.x + 26 + tw, box.y + 33);
+      const total = t.n * t.m;
+      roundRect(ctx, box.x + 18, box.y + 44, box.w - 36, 8, 4);
+      ctx.fillStyle = c.line;
+      ctx.fill();
+      if (cmp) {
+        roundRect(ctx, box.x + 18, box.y + 44, Math.max(8, (box.w - 36) * Math.min(1, cmp / total)), 8, 4);
+        ctx.fillStyle = col;
+        ctx.fill();
+      }
+      ctx.font = `500 13px ${this.font}`;
+      ctx.fillStyle = c.muted;
+      this.fitText(`a nested loop needs ${total} · here ≈ log₂ m per student`, box.x + 18, box.y + 67, box.w - 36);
+    }
+
+    // Where the parts of the index sit inside the algorithm area.
+    indexGeom() {
+      const A = this.L.AREA;
+      const { root, leaves } = this.t.index;
+      const kw = 46, rw = 24 + root.keys.length * kw;
+      const R = { x: A.x + (A.w - rw) / 2, y: A.y + 126, w: rw, h: 40 };
+      const gap = 14, nl = leaves.length;
+      const lw = (A.w - gap * (nl - 1)) / nl;
+      const per = this.t.index.leaves.reduce((mx, lf) => Math.max(mx, lf.entries.length), 1);
+      const leaf = (i) => ({ x: A.x + i * (lw + gap), y: A.y + 210, w: lw, h: 62 });
+      return {
+        root: R,
+        rootKey: (i) => ({ x: R.x + 12 + i * kw, y: R.y + 6, w: kw - 6, h: R.h - 12 }),
+        childAt: (i) => ({ x: R.x + 8 + (i * (R.w - 16)) / root.keys.length, y: R.y + R.h }),
+        leaf,
+        entry: (i, j) => {
+          const r = leaf(i), ew = (r.w - 12 - 6 * (per - 1)) / per;
+          return { x: r.x + 6 + j * (ew + 6), y: r.y + 6, w: ew, h: r.h - 12 };
+        },
+      };
+    }
+
+    // A leaf entry of the index: the key, and the row it points to.
+    leafEntry(r, en, o) {
+      const { ctx, c } = this;
+      roundRect(ctx, r.x, r.y, r.w, r.h, 7);
+      ctx.fillStyle = o.fill;
+      ctx.fill();
+      if (o.stroke) {
+        ctx.lineWidth = o.lw || 2.5;
+        ctx.strokeStyle = o.stroke;
+        ctx.stroke();
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `800 18px ${this.font}`;
+      ctx.fillStyle = o.color;
+      ctx.fillText(String(en.key), r.x + r.w / 2, r.y + r.h * 0.36);
+      ctx.font = `600 11.5px ${this.font}`;
+      ctx.fillStyle = c.muted;
+      ctx.fillText(`→ row ${en.di + 1}`, r.x + r.w / 2, r.y + r.h * 0.76);
+      ctx.textAlign = 'left';
     }
 
     // Hash join: the hash function and the buckets of the hash table.
@@ -973,19 +1145,20 @@
       return { i: lerp(a.ptr.i, b.ptr.i, k), j: lerp(a.ptr.j, b.ptr.j, k), alpha: 1 };
     }
 
-    // Before any run: the three algorithms at a glance.
+    // Before any run: the four algorithms at a glance.
     paintMenu() {
       const { ctx, c, L } = this;
       const A = L.AREA;
       const items = [
         ['nl', 'Nested loop', 'Compare every student with every department.', 'n × m'],
+        ['inl', 'Index nested loop', 'Look each student up in the index on departments.id.', 'n × log m'],
         ['hash', 'Hash join', 'Put the departments into buckets, then search one bucket per student.', '≈ n + m'],
         ['merge', 'Merge join', 'Sort both tables, then walk down them together once.', 'sort + (n + m)'],
       ];
-      this.areaLabel('three ways to compute the same join', A.x, A.y + 10);
+      this.areaLabel('four ways to compute the same join', A.x, A.y + 10);
       items.forEach(([key, name, desc, cost], k) => {
         const [col, soft] = this.hue(key);
-        const r = { x: A.x, y: A.y + 24 + k * 104, w: A.w, h: 92 };
+        const r = { x: A.x, y: A.y + 24 + k * 86, w: A.w, h: 76 };
         const on = this.algo === key;
         roundRect(ctx, r.x, r.y, r.w, r.h, 12);
         ctx.fillStyle = on ? soft : c.panel2;
@@ -1000,14 +1173,14 @@
         ctx.textBaseline = 'alphabetic';
         ctx.font = `750 17px ${this.font}`;
         ctx.fillStyle = col;
-        ctx.fillText(name, r.x + 20, r.y + 28);
+        ctx.fillText(name, r.x + 20, r.y + 26);
         ctx.font = `700 14px ${this.mono}`;
         ctx.textAlign = 'right';
-        ctx.fillText(cost, r.x + r.w - 16, r.y + 28);
+        ctx.fillText(cost, r.x + r.w - 16, r.y + 26);
         ctx.textAlign = 'left';
         ctx.font = `500 13.5px ${this.font}`;
         ctx.fillStyle = c.ink2;
-        this.wrap(desc, r.w - 40).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, r.x + 20, r.y + 52 + i * 19));
+        this.wrap(desc, r.w - 40).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, r.x + 20, r.y + 48 + i * 18));
       });
     }
 
@@ -1017,6 +1190,7 @@
       const t = this.t;
       switch (b.run.type) {
         case 'nl': return 'inner loop';
+        case 'inl': return 'indexed on id';
         case 'hash': return 'build side (smaller)';
         case 'merge': return isSorted(b.dOrder.map((i) => t.depts[i].key)) && b.kind !== 'plan' ? 'sorted by id' : 'not sorted yet';
         default: return `${t.m} rows · id is unique`;
@@ -1039,13 +1213,14 @@
       t.depts.forEach((d) => {
         if (F.dMoving(d.i)) { moving.push(d); return; }
         let hl = null;
-        if (F.cur && F.cur.di === d.i) hl = F.cur.res === 'yes' ? 'good' : 'warn';
+        if (b.run.type === 'inl') hl = seen.get(d.i) === 'yes' ? 'good' : null; // keys are compared in the index, not here
+        else if (F.cur && F.cur.di === d.i) hl = F.cur.res === 'yes' ? 'good' : 'warn';
         else if (seen.get(d.i) === 'yes') hl = 'good';
         else if (b.dCur === d.i) hl = 'warn';
         const passed = b.run.type === 'merge' && b.ptr && b.dOrder.indexOf(d.i) < b.ptr.j;
         let bucket = where[d.i];
         if (F.live && b.kind === 'build' && b.hashing.idx === d.i && F.p < 0.9) bucket = undefined;
-        this.deptRow(d, this.dRect(F.dPos(d.i)), { hl, dim: passed, bucket });
+        this.deptRow(d, this.dRect(F.dPos(d.i)), { hl, dim: passed, bucket, rowNo: b.run.type === 'inl' ? d.i + 1 : null });
       });
       moving.forEach((d) => {
         const r = this.dRect(F.dPos(d.i));
@@ -1067,6 +1242,7 @@
       ctx.textAlign = 'left';
       this.fitText(d.name, r.x + 64, r.y + r.h / 2 + 0.5, r.w - 150);
       if (o.bucket != null) this.tag(r.x + r.w - 44, r.y + r.h / 2, `bucket ${o.bucket}`, c.violet, c.violetSoft);
+      if (o.rowNo != null) this.tag(r.x + r.w - 34, r.y + r.h / 2, `row ${o.rowNo}`, c.accent, c.accentSoft);
       ctx.restore();
     }
 
@@ -1120,6 +1296,7 @@
     paintFlights(F) {
       const { L, t } = this;
       const b = F.b;
+      this.paintFetch(F);
       if (!F.live) return;
 
       // Hash build: the department's id flies from its row into its bucket.
@@ -1149,6 +1326,51 @@
         r.y -= Math.sin(x.f * Math.PI) * 30;
         this.resultRow(x.r, r, { lift: true, glow: 1 });
       });
+    }
+
+    // Index nested loop: a dashed pointer from the leaf entry to the one department row it names.
+    paintFetch(F) {
+      const b = F.b;
+      if (b.run.type !== 'inl' || !b.fetch || !b.seq) return;
+      const { ctx } = this;
+      const idx = b.seq.items.findIndex((it) => it.res === 'yes');
+      const k = F.live ? clamp((F.p - revealAt(b.seq, idx) - 0.04) / 0.15, 0, 1) : 1;
+      if (k <= 0) return;
+      const G = this.indexGeom();
+      const e = G.entry(b.fetch.leaf, b.fetch.ki);
+      const d = this.dRect(F.dPos(b.fetch.di));
+      const WS = this.L.WS;
+      // Route around the tree: down out of the entry, along the gap under the leaves,
+      // up the right edge of the join engine card, then across into the row.
+      const from = { x: e.x + e.w / 2, y: e.y + e.h };
+      const laneY = G.leaf(0).y + G.leaf(0).h + 9;
+      const laneX = WS.x + WS.w - 8;
+      const to = { x: d.x - 6, y: d.y + d.h / 2 };
+      const pts = [from, { x: from.x, y: laneY }, { x: laneX, y: laneY }, { x: laneX, y: to.y }, to];
+      const col = this.hue('inl')[0];
+      ctx.save();
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([9, 7]);
+      ctx.lineDashOffset = -(this.now || 0) / 30;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length - 1; i++) ctx.arcTo(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, 10);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y);
+      ctx.lineTo(to.x - 12, to.y - 6);
+      ctx.lineTo(to.x - 12, to.y + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(from.x, from.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     // ----- Tour spotlight -----

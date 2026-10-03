@@ -250,7 +250,7 @@
         this.touch(fr);
         ctx.stats.hits++;
         this.snap(ctx, 'hit', {
-          hit: fr, focus: fr, line, dur: 650,
+          hit: fr, focus: fr, line, dur: Math.round(650 * (say.pace || 1)), hold: say.hold,
           msg: `${pg.kind === 'data' ? `Page ${pageName(pg)}` : pg.kind === 'root' ? "The index's root page" : `Index ${pageName(pg)}`} is already in RAM (a buffer hit), so no disk read is needed.`,
           cpu: { act: 'Page already in RAM', verdict: 'yes' },
         });
@@ -270,7 +270,7 @@
       const ev = evict ? ` RAM is full, so the least recently used page (${pageName(this.table.pages[evict])}) is evicted to make room.` : '';
       this.snap(ctx, 'read', {
         read: { pid, frame: fr, evict }, focus: fr, line,
-        dur: say.slow ? 1600 : 1150,
+        dur: say.slow ? 1600 : Math.round(1150 * (say.pace || 1)), hold: say.hold,
         msg: say.read + ev,
         cpu: { act: 'Waiting for the disk…', wait: true },
       });
@@ -300,15 +300,20 @@
 
       let stopped = false;
       for (const pg of t.data) {
-        const early = pg.no < 2; // explain the first pages in detail, then keep the pace up
+        // Explain the first pages in detail, then speed the animation up page by page
+        // (pace 1 → 0.28) so the rest of the table doesn't drag on in class.
+        const early = pg.no < 2;
+        const pace = early ? 1 : Math.max(0.28, 1 - 0.18 * (pg.no - 1));
         const name = pageName(pg);
         const fr = this.load(ctx, pg.id, 1, {
-          slow: early,
+          slow: early, pace, hold: early ? null : Math.round(500 * pace),
           read: pg.no === 0
             ? `Read page ${name} from the ${this.disk.name} into a free RAM frame. This is the slow part: ≈${ms}, and the CPU can do nothing but wait.`
             : early
               ? `Next page: read ${name} from disk into RAM (≈${ms} again).`
-              : `Read ${name} from disk → RAM (≈${ms}).`,
+              : pg.no === 2
+                ? `Read ${name} from disk → RAM. From here on the animation speeds up — but every page still costs ≈${ms} on the clock.`
+                : `Read ${name} from disk → RAM (≈${ms}).`,
         });
 
         const items = pg.rows.map((r, i) => ({ i, res: match(r) ? 'yes' : 'no' }));
@@ -330,9 +335,9 @@
           msg = `Check its ${pg.rows.length} rows in RAM — no match.`;
         }
         this.snap(ctx, 'scan', {
-          focus: fr, line: hits.length ? 3 : 2, dur: 180 * pg.rows.length + 160,
+          focus: fr, line: hits.length ? 3 : 2, dur: Math.round((180 * pg.rows.length + 160) * pace),
           seq: { frame: fr, pid: pg.id, items },
-          msg, status: hits.length ? 'success' : 'info', hold: hits.length ? 1800 : early ? 1300 : 250,
+          msg, status: hits.length ? 'success' : 'info', hold: hits.length ? 1800 : early ? 1300 : Math.round(250 * pace),
           cpu: { act: hits.length ? `Found ${hits.map((r) => r.id).join(', ')}` : 'No match on this page', verdict: hits.length ? 'yes' : 'no' },
         });
         if (hits.length && first) { stopped = true; break; }
@@ -346,7 +351,8 @@
         ? `Done: stopped at page ${pages} of ${DATA_PAGES}, after ${plural(s.reads, 'disk read')} and ${s.rows} rows checked. Without LIMIT 1 it would have read all ${DATA_PAGES} pages.`
         : `Done: ${found} after ${plural(s.reads, 'disk read')} and ${s.rows} rows checked. Disk time ${fmtMs(s.diskMs)} vs RAM time ${fmtMs(s.ramMs)} — the disk is the bottleneck.`;
       this.board.scan.done = true;
-      this.snap(ctx, 'done', { line: 4, msg, status: n ? 'success' : 'warn', dur: 500, cpu: { act: n ? 'Done' : 'Done — no rows' } });
+      // With LIMIT 1 a match returns from inside the loop; line 4 is then "return no rows".
+      this.snap(ctx, 'done', { line: stopped ? 3 : 4, msg, status: n ? 'success' : 'warn', dur: 500, cpu: { act: n ? 'Done' : 'Done — no rows' } });
       return ctx.steps;
     }
 

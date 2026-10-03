@@ -359,12 +359,13 @@
     }
   }
 
-  // Free space for the scene (excludes the caption and the scoreboard).
+  // Free space for the scene (excludes the caption, the scoreboard and the author watermark above it).
   function measureInsets() {
     const w = el.wrap.getBoundingClientRect();
     const cap = el.caption.getBoundingClientRect();
-    const bot = el.board.getBoundingClientRect();
-    return { top: cap.bottom - w.top + 2, bottom: w.bottom - bot.top + 2, left: 0, right: 0 };
+    const mark = el.wrap.querySelector('.author-watermark');
+    const bot = Math.min(el.board.getBoundingClientRect().top, mark ? mark.getBoundingClientRect().top - 4 : Infinity);
+    return { top: cap.bottom - w.top + 2, bottom: w.bottom - bot + 2, left: 0, right: 0 };
   }
 
   let toastTimer = 0;

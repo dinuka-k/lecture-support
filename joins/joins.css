@@ -72,6 +72,7 @@ body.no-sidebar .sidebar { display: none; }
 }
 
 .canvas-wrap {
+  --watermark-bottom: 186px; /* sit above the scoreboard */
   position: relative;
   overflow: hidden;
   background: var(--bg);
@@ -423,6 +424,23 @@ body.no-sidebar .sidebar { display: none; }
 .keys { border-collapse: collapse; font-size: 14px; }
 .keys td { padding: 4px 12px 4px 0; }
 .keys td:first-child { white-space: nowrap; }
+
+/* ---------- Short screens (projectors) ---------- */
+
+/* Keep the caption and the three-lane scoreboard compact so the scene stays large. */
+@media (max-height: 820px) and (min-width: 861px) {
+  .canvas-wrap { --watermark-bottom: 150px; }
+  .caption { top: 8px; left: 8px; right: 8px; padding: 7px 12px 7px 14px; }
+  .caption-text { font-size: 15.5px; line-height: 1.35; min-height: 2.7em; }
+  .rules { display: none; }
+  .board { left: 8px; right: 8px; bottom: 8px; padding: 5px 10px; gap: 1px; }
+  .lane { padding: 2px 8px; }
+  .lane-name b { font-size: 14px; }
+  .lane-name small { font-size: 11px; }
+  .lane-num b { font-size: 17px; line-height: 1.1; }
+  .lane-num span { font-size: 10.5px; }
+  .lane-bar .track { height: 10px; }
+}
 
 /* ---------- Smaller screens ---------- */
 

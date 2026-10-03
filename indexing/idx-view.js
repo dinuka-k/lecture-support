@@ -280,7 +280,7 @@
       ctx.font = `650 14.5px ${this.font}`;
       if (!res.length) {
         ctx.fillStyle = c.muted;
-        ctx.fillText(run.q ? '(no rows yet)' : '—', x + 64, CPU.y + 222);
+        ctx.fillText(run.q ? '(no rows yet)' : '-', x + 64, CPU.y + 222);
       } else {
         const shown = res.slice(0, 2).map((r) => `${r.id} · ${r.name} (p${r.page + 1})`);
         ctx.fillStyle = c.good;
@@ -306,11 +306,11 @@
           const r = pg.rows[it.i];
           const v = q.col === 'id' ? r.id : `'${r.name}'`;
           const want = q.col === 'id' ? q.val : `'${q.val}'`;
-          if (b.kind === 'fetch') return { text: `Row ${r.id} · ${r.name}`, sub: `slot ${it.i + 1} — no searching needed`, verdict: 'yes' };
+          if (b.kind === 'fetch') return { text: `Row ${r.id} · ${r.name}`, sub: `slot ${it.i + 1}, no searching needed`, verdict: 'yes' };
           return { text: `${q.col} ${v} = ${want} ?`, sub: `row ${it.i + 1} of ${pg.rows.length} · ≈${fmtMs(RAM_MS)} each`, verdict: it.res };
         }
         if (pg.kind === 'root') {
-          return { text: `${q.val} in ${pg.ranges[it.i]} ?`, sub: it.res === 'go' ? `yes → open leaf ${it.i + 1}` : 'no — next range', verdict: it.res === 'go' ? 'go' : 'no' };
+          return { text: `${q.val} in ${pg.ranges[it.i]} ?`, sub: it.res === 'go' ? `yes → open leaf ${it.i + 1}` : 'no, next range', verdict: it.res === 'go' ? 'go' : 'no' };
         }
         const key = pg.entries[it.i].key;
         const sub = it.res === 'yes' ? 'found the entry' : it.res === 'right' ? 'too small → look right' : 'too big → look left';
@@ -483,8 +483,8 @@
       ctx.textAlign = 'left';
 
       // file labels
-      this.fileLabel(GRID.x, GRID.y - 14, 'students.dat', '— the table · rows in insertion order (not sorted)', c.accent);
-      this.fileLabel(IDX.x, IDX.y - 14, 'students_id_idx', '— index on id (sorted)', c.violet);
+      this.fileLabel(GRID.x, GRID.y - 14, 'students.dat', '· the table · rows in insertion order (not sorted)', c.accent);
+      this.fileLabel(IDX.x, IDX.y - 14, 'students_id_idx', '· index on id (sorted)', c.violet);
       ctx.fillStyle = c.muted;
       ctx.font = `500 12.5px ${this.font}`;
       const gb = GRID.y + 2 * GRID.h + GRID.gy;

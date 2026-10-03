@@ -35,14 +35,14 @@
     scan: [
       'for each page P of students.dat:',
       '  if P is not in RAM: read P from disk ▹ slow',
-      '  for each row R in P: ▹ in RAM — fast',
+      '  for each row R in P: ▹ in RAM: fast',
       '    if R.{col} = {val}: add R to the result',
       'return the result',
     ],
     scanFirst: [
       'for each page P of students.dat:',
       '  if P is not in RAM: read P from disk ▹ slow',
-      '  for each row R in P: ▹ in RAM — fast',
+      '  for each row R in P: ▹ in RAM: fast',
       '    if R.{col} = {val}: return R ▹ LIMIT 1',
       'return no rows',
     ],
@@ -325,9 +325,9 @@
           if (first) msg += ' LIMIT 1 lets the scan stop here.';
           else if (pg.no < DATA_PAGES - 1) msg += ` But keep scanning: without an index the database can't know there is no other row with ${ctx.run.where} further on.`;
         } else if (early) {
-          msg = `Now the CPU checks the ${pg.rows.length} rows in RAM: ${pg.rows.map((r) => (q.col === 'id' ? r.id : r.name)).join(', ')} — no match. This takes about ${fmtMs(pg.rows.length * RAM_MS)}: RAM is fast.`;
+          msg = `Now the CPU checks the ${pg.rows.length} rows in RAM: ${pg.rows.map((r) => (q.col === 'id' ? r.id : r.name)).join(', ')}, no match. This takes about ${fmtMs(pg.rows.length * RAM_MS)}: RAM is fast.`;
         } else {
-          msg = `Check its ${pg.rows.length} rows in RAM — no match.`;
+          msg = `Check its ${pg.rows.length} rows in RAM, no match.`;
         }
         this.snap(ctx, 'scan', {
           focus: fr, line: hits.length ? 3 : 2, dur: 180 * pg.rows.length + 160,
@@ -344,10 +344,10 @@
       const found = n ? `found ${plural(n, 'row')}` : `found no row with ${ctx.run.where}`;
       const msg = stopped
         ? `Done: stopped at page ${pages} of ${DATA_PAGES}, after ${plural(s.reads, 'disk read')} and ${s.rows} rows checked. Without LIMIT 1 it would have read all ${DATA_PAGES} pages.`
-        : `Done: ${found} after ${plural(s.reads, 'disk read')} and ${s.rows} rows checked. Disk time ${fmtMs(s.diskMs)} vs RAM time ${fmtMs(s.ramMs)} — the disk is the bottleneck.`;
+        : `Done: ${found} after ${plural(s.reads, 'disk read')} and ${s.rows} rows checked. Disk time ${fmtMs(s.diskMs)} vs RAM time ${fmtMs(s.ramMs)}, the disk is the bottleneck.`;
       this.board.scan.done = true;
       // With LIMIT 1 a match returns from inside the loop; line 4 is then "return no rows".
-      this.snap(ctx, 'done', { line: stopped ? 3 : 4, msg, status: n ? 'success' : 'warn', dur: 500, cpu: { act: n ? 'Done' : 'Done — no rows' } });
+      this.snap(ctx, 'done', { line: stopped ? 3 : 4, msg, status: n ? 'success' : 'warn', dur: 500, cpu: { act: n ? 'Done' : 'Done: no rows' } });
       return ctx.steps;
     }
 
@@ -411,7 +411,7 @@
         seq: { frame: lfr, pid: leaf.id, items },
         msg: hit
           ? `The leaf is sorted, so binary search halves the candidates each time: ${trail}. The entry says id ${val} lives on page p${hit.page + 1}, slot ${hit.slot + 1}.`
-          : `Binary search the sorted leaf: ${trail}. Id ${val} isn't there — so no row has id ${val}, and we know it after just ${plural(ctx.stats.reads + ctx.stats.hits, 'page')}.`,
+          : `Binary search the sorted leaf: ${trail}. Id ${val} isn't there, so no row has id ${val}, and we know it after just ${plural(ctx.stats.reads + ctx.stats.hits, 'page')}.`,
         status: hit ? 'info' : 'warn',
         cpu: { act: hit ? `${val} → p${hit.page + 1}, slot ${hit.slot + 1}` : `${val} not in the index`, verdict: hit ? 'yes' : 'no' },
       });
@@ -444,12 +444,12 @@
       if (s.reads === 0) {
         msg = `Done: all ${pages} pages were already in RAM, so this lookup needed no disk reads at all. That's why repeated queries are often much faster.`;
       } else if (sc && sc.done && sc.where === ctx.run.where && sc.stats.diskMs > s.diskMs) {
-        msg = `Done: ${plural(s.reads, 'disk read')} instead of ${sc.stats.reads} — ${timesFaster(sc.stats.diskMs + sc.stats.ramMs, s.diskMs + s.ramMs)}× faster than the full table scan.`;
+        msg = `Done: ${plural(s.reads, 'disk read')} instead of ${sc.stats.reads}, ${timesFaster(sc.stats.diskMs + sc.stats.ramMs, s.diskMs + s.ramMs)}× faster than the full table scan.`;
       } else {
         msg = `Done: the index answered with only ${plural(s.reads, 'disk read')}, where a full scan needs ${DATA_PAGES}. Run a full scan on the same id to compare.`;
       }
       this.board.index.done = true;
-      this.snap(ctx, 'done', { line: hit ? 8 : 9, msg, status: hit ? 'success' : 'warn', dur: 500, cpu: { act: hit ? 'Done' : 'Done — no rows' } });
+      this.snap(ctx, 'done', { line: hit ? 8 : 9, msg, status: hit ? 'success' : 'warn', dur: 500, cpu: { act: hit ? 'Done' : 'Done: no rows' } });
       return ctx.steps;
     }
 
@@ -473,11 +473,11 @@
       const row = this.findRow('id', val) || this.table.rows[0];
       const hit = this.table.leaves.flatMap((l) => l.entries).find((en) => en.key === row.id);
       const say = (spot, msg) => this.snap(ctx, 'tour', { spot, msg, dur: 600, hold: 7000, cpu: { act: 'Waiting for a query' } });
-      say('disk', `This is the disk. The students table lives here permanently, in a file called students.dat. A ${d.name} stores a lot for little money — but it is slow.`);
+      say('disk', `This is the disk. The students table lives here permanently, in a file called students.dat. A ${d.name} stores a lot for little money, but it is slow.`);
       say('data', `The file is cut into fixed-size pages (blocks). Here each page holds ${ROWS_PER_PAGE} rows; real databases use ~8 KB pages with about a hundred rows. The disk always reads a whole page, never a single row.`);
-      say('data', `Rows are stored in the order they were inserted, so the ids are not sorted. Id ${row.id} could be on any page — it happens to be on p${row.page + 1}.`);
+      say('data', `Rows are stored in the order they were inserted, so the ids are not sorted. Id ${row.id} could be on any page, it happens to be on p${row.page + 1}.`);
       say('ram', `This is RAM, the database's buffer pool. The CPU can only check rows that are in RAM. RAM is fast (≈100 ns) but small: only ${this.opts.frames} pages fit here, and it forgets everything when the power goes off.`);
-      say('bus', `Copying one page from disk into RAM takes ≈${fmtMs(d.pageMs)} on a ${d.name} — about ${fmtInt(d.pageMs / RAM_MS)}× slower than reading RAM. So: the fewer pages a query reads from disk, the faster it is.`);
+      say('bus', `Copying one page from disk into RAM takes ≈${fmtMs(d.pageMs)} on a ${d.name}, about ${fmtInt(d.pageMs / RAM_MS)}× slower than reading RAM. So: the fewer pages a query reads from disk, the faster it is.`);
       say('cpu', `The query engine runs our SQL. Without help, the only way to find id ${row.id} is to bring every page into RAM and check every row: a full table scan.`);
       say('index', `An index is a second, much smaller file, sorted by id. Each leaf entry says where a row lives (${row.id} → p${hit.page + 1}). The root page tells us which leaf to open, so a lookup touches just a few pages.`);
       say('board', 'The scoreboard counts disk reads, checks in RAM and time. Press Compare to run both plans on the same id and watch the difference.');

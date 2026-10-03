@@ -120,7 +120,7 @@
 
         <section class="panel">
           <h2>Statistics &amp; indexes</h2>
-          <p class="note">Change a table’s size or click a column to add / drop its index. The query is re-planned at once — the rewrite stays the same, because rules never use statistics.</p>
+          <p class="note">Change a table’s size or click a column to add / drop its index. The query is re-planned at once, the rewrite stays the same, because rules never use statistics.</p>
           <div class="catalog" id="catalog"></div>
           <div class="setting">
             <div class="setting-label">Storage<small>Cost of one random page read</small></div>
@@ -160,8 +160,8 @@
         <section>
           <h3>The pipeline</h3>
           <ul>
-            <li><b>Parser</b>: checks the grammar, splits the SQL into clauses and binds every name to the catalog. The result is the <b>canonical tree</b> π(σ(R₁ × R₂ × …)) — correct but very slow.</li>
-            <li><b>Rewriter (rule-based, RBO)</b>: applies equivalence rules in a fixed order — unnest subqueries, fold constants, remove redundant or impossible conditions, split AND, push selections down, turn × + condition into ⋈, infer transitive conditions, prune columns. Rules don’t look at data sizes.</li>
+            <li><b>Parser</b>: checks the grammar, splits the SQL into clauses and binds every name to the catalog. The result is the <b>canonical tree</b> π(σ(R₁ × R₂ × …)), correct but very slow.</li>
+            <li><b>Rewriter (rule-based, RBO)</b>: applies equivalence rules in a fixed order, unnest subqueries, fold constants, remove redundant or impossible conditions, split AND, push selections down, turn × + condition into ⋈, infer transitive conditions, prune columns. Rules don’t look at data sizes.</li>
             <li><b>Planner (cost-based, CBO)</b>: uses <b>statistics</b> (rows, pages, distinct values, min/max, indexes) to estimate how many rows each step produces and what it costs. It chooses an <b>access path</b> per table (Seq Scan or Index Scan), the <b>join order</b> (dynamic programming over sets of tables) and a <b>join method</b> (nested loop, index nested loop, hash, merge).</li>
           </ul>
           <h3>Simplifications</h3>
@@ -175,7 +175,7 @@
           <h3>Try this</h3>
           <ul>
             <li>Edit the query: add a filter, remove a join condition, misspell a column.</li>
-            <li>Example “Index ignored”: change <code>year = 2</code> to <code>id = 7</code> — the plan switches to an Index Scan.</li>
+            <li>Example “Index ignored”: change <code>year = 2</code> to <code>id = 7</code>, the plan switches to an Index Scan.</li>
             <li>In <b>Statistics &amp; indexes</b>, drop the index on <code>enrollments.student_id</code>, or make <code>students</code> tiny, and watch the join order change.</li>
             <li>Switch storage to SSD: random reads get cheaper, so indexes win more often.</li>
           </ul>

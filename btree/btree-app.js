@@ -229,7 +229,7 @@
 
   function renderLog() {
     const op = opAt(T.cur);
-    el.stepsTitle.textContent = op ? `— ${op.label}` : '';
+    el.stepsTitle.textContent = op ? `· ${op.label}` : '';
     const from = op ? op.start : T.cur;
     const frag = document.createDocumentFragment();
     for (let i = from; i <= T.cur; i++) {
@@ -282,7 +282,7 @@
     $('segBias').classList.toggle('disabled', odd);
     el.biasNote.textContent = odd
       ? `m = ${m} is odd, so a full node (${m} keys) has a single middle key.`
-      : `A full node has ${m} keys — which of the two middle keys moves up?`;
+      : `A full node has ${m} keys, which of the two middle keys moves up?`;
   }
 
   function refreshPlayer() {
@@ -340,9 +340,9 @@
 
   function command(type, fromButton) {
     const { keys, bad } = parseKeys(el.input.value);
-    if (bad.length) return toast(`Keys must be whole numbers from −9999 to 9999 — couldn't read “${bad.join(' ')}”.`);
+    if (bad.length) return toast(`Keys must be whole numbers from −9999 to 9999, couldn't read “${bad.join(' ')}”.`);
     if (!keys.length) {
-      toast('Type a key first — e.g. 42, or several: 10, 20, 5');
+      toast('Type a key first, e.g. 42, or several: 10, 20, 5');
       el.input.focus();
       return;
     }
@@ -394,7 +394,7 @@
   function renderTray() {
     el.tray.replaceChildren();
     if (!trayKeys.length) {
-      el.tray.innerHTML = '<span class="tray-empty">Empty — add numbers or roll the dice →</span>';
+      el.tray.innerHTML = '<span class="tray-empty">Empty: add numbers or roll the dice →</span>';
       return;
     }
     trayKeys.forEach((k) => {
@@ -614,7 +614,7 @@
   el.trayInput.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     const { keys, bad } = parseKeys(el.trayInput.value);
-    if (bad.length) return toast(`Keys must be whole numbers from −9999 to 9999 — couldn't read “${bad.join(' ')}”.`);
+    if (bad.length) return toast(`Keys must be whole numbers from −9999 to 9999, couldn't read “${bad.join(' ')}”.`);
     trayAdd(keys);
     el.trayInput.value = '';
   });

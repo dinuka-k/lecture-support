@@ -48,7 +48,7 @@
         <thead><tr><th>Written</th><th></th><th>Means</th><th></th><th></th></tr></thead>
         <tbody>${tables.map(row).join('')}${colsB.map(row).join('')}</tbody>
       </table>
-      <p class="b-note">Unknown tables, misspelt columns and ambiguous names (a column that exists in two tables) are reported here — try one!</p>`;
+      <p class="b-note">Unknown tables, misspelt columns and ambiguous names (a column that exists in two tables) are reported here, try one!</p>`;
   }
 
   function canonical(b) {
@@ -60,7 +60,7 @@
     const big = b.from.length > 1;
     return `<p class="b-lead">The canonical form of SELECT … FROM … WHERE, in relational algebra:</p>
       <div class="b-ra">${ra}</div>
-      ${big ? `<div class="b-alert">Executed literally, × first pairs every row with every row:<br><b>${b.sizes.join(' × ')} = ${esc(fmtBig(b.prodRows))}</b> combinations — before σ throws nearly all of them away.</div>` : ''}
+      ${big ? `<div class="b-alert">Executed literally, × first pairs every row with every row:<br><b>${b.sizes.join(' × ')} = ${esc(fmtBig(b.prodRows))}</b> combinations, before σ throws nearly all of them away.</div>` : ''}
       ${b.subs ? '<p class="b-note">The subquery hangs off σ (dashed): run literally, it would be evaluated for every row.</p>' : ''}
       <p class="b-note">Correct, but ${big ? 'hopelessly slow' : 'not yet optimized'}. Now the optimizer looks for an equivalent tree that is much cheaper to run.</p>`;
   }
@@ -98,7 +98,7 @@
       <ul class="b-tables">${b.tables.map((t) => `<li><b>${esc(t.name)}</b>${t.sub ? ' <span class="b-pill">subquery</span>' : ''}<div>${t.filters.length ? t.filters.map(code).join(' ') : '<span class="muted">no filter</span>'}</div></li>`).join('')}</ul>
       ${b.edges.length ? `<h4>Join conditions</h4><ul class="b-plain">${b.edges.map((e) => `<li>${code(e)}</li>`).join('')}</ul>` : ''}
       ${b.complex.length ? `<h4>Other conditions</h4><ul class="b-plain">${b.complex.map((e) => `<li>${code(e)}</li>`).join('')}</ul>` : ''}
-      ${b.tables.length > 1 ? '<p class="b-note">Joins can be reordered: (A ⋈ B) ⋈ C = A ⋈ (B ⋈ C) = (A ⋈ C) ⋈ B. Every order gives the same rows — at very different costs.</p>' : ''}`;
+      ${b.tables.length > 1 ? '<p class="b-note">Joins can be reordered: (A ⋈ B) ⋈ C = A ⋈ (B ⋈ C) = (A ⋈ C) ⋈ B. Every order gives the same rows, at very different costs.</p>' : ''}`;
   }
 
   function stats(b) {
@@ -107,7 +107,7 @@
       <div class="b-stat">
         <div class="b-stat-head"><b>${esc(t.name)}</b><span>${fmtInt(t.rows)} rows · ${fmtInt(t.pages)} page${t.pages === 1 ? '' : 's'} (${t.perPage} rows/page)</span></div>
         ${t.cols.length ? `<table><thead><tr><th>column</th><th>distinct (NDV)</th><th>min … max</th><th>index</th></tr></thead><tbody>${t.cols.map((c) => `
-          <tr><td>${code(c.name)}</td><td class="num">${fmtInt(c.ndv)}</td><td>${esc(c.range)}</td><td>${c.indexed ? `<span class="b-pill ok">${esc(c.index)}</span>` : '<span class="muted">—</span>'}</td></tr>`).join('')}</tbody></table>` : '<p class="muted small">no filter or join column</p>'}
+          <tr><td>${code(c.name)}</td><td class="num">${fmtInt(c.ndv)}</td><td>${esc(c.range)}</td><td>${c.indexed ? `<span class="b-pill ok">${esc(c.index)}</span>` : '<span class="muted">-</span>'}</td></tr>`).join('')}</tbody></table>` : '<p class="muted small">no filter or join column</p>'}
       </div>`).join('')}
       <p class="b-note">Cost units: a page read in order = 1.0 · a random page read = ${b.rpc} (${b.storage === 'ssd' ? 'SSD' : 'hard disk'}) · per row = 0.01 · per comparison = 0.0025.</p>`;
   }
@@ -157,7 +157,7 @@
       const all = d.rows2.flatMap((r) => r.costs.filter((x) => x.cost != null).map((x) => x.cost));
       const min = Math.min(...all), max = Math.max(...all);
       const cellH = (x) => {
-        if (x.cost == null) return `<td class="na" title="${esc(x.na)}">—</td>`;
+        if (x.cost == null) return `<td class="na" title="${esc(x.na)}">-</td>`;
         return `<td class="${x.win ? 'win' : ''}" title="${esc(x.formula || '')}"><span class="mbar" style="width:${logW(x.cost, min * 0.5, max).toFixed(1)}%"></span><span class="v">${fmtCost(x.cost)}</span></td>`;
       };
       detail = `<div class="b-matrix fresh">
@@ -170,7 +170,7 @@
             : `<tr class="${r.best ? 'has-win' : ''}"><td>${code(r.label)}</td>${r.costs.map(cellH).join('')}</tr>`)).join('')}
           </tbody>
         </table>
-        <div class="b-win">Kept: <b>${esc(d.win.method)}</b> of ${code(d.win.label)} · cost <b>${fmtCost(d.win.cost)}</b> — all other plans for this set are pruned.</div>
+        <div class="b-win">Kept: <b>${esc(d.win.method)}</b> of ${code(d.win.label)} · cost <b>${fmtCost(d.win.cost)}</b>: all other plans for this set are pruned.</div>
       </div>`;
     }
     const lead = d ? '' : '<p class="b-lead">Dynamic programming: the best plan for each set of tables, smallest sets first. Bigger sets only extend the winners of smaller ones.</p>';
@@ -228,9 +228,9 @@
   function intro() {
     return `<p class="b-lead">Type a query (or pick an example) and press <b>Optimize</b>. You will see:</p>
       <ol class="b-plain">
-        <li><b>Parser</b> — SQL text → query tree</li>
-        <li><b>Rewriter (RBO)</b> — fixed rules make the tree smarter</li>
-        <li><b>Planner (CBO)</b> — statistics and costs pick the plan</li>
+        <li><b>Parser</b>: SQL text → query tree</li>
+        <li><b>Rewriter (RBO)</b>: fixed rules make the tree smarter</li>
+        <li><b>Planner (CBO)</b>: statistics and costs pick the plan</li>
       </ol>`;
   }
 

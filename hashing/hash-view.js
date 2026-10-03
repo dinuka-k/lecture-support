@@ -124,12 +124,12 @@
     const w = s.buckets.length * (PW + COLGAP) - COLGAP;
     const h = maxPages * (pageH + OVGAP) - OVGAP;
     if (mode === 'disk') {
-      F.regions.push({ rect: { x: -20, y: -44, w: w + 40, h: h + 64 }, title: 'Disk — one page per bucket, overflow pages chained below' });
+      F.regions.push({ rect: { x: -20, y: -44, w: w + 40, h: h + 64 }, title: 'Disk: one page per bucket, overflow pages chained below' });
     } else {
       // The split pointer sits under bucket `next`.
       const nx = s.next * (PW + COLGAP) + PW / 2;
       F.marks.push({ x: nx, y: h + 40, kind: 'next', label: 'next' });
-      F.regions.push({ rect: { x: -20, y: -44, w: w + 40, h: h + 104 }, title: `Buckets — level ${s.level}, N = ${s.Nl}` });
+      F.regions.push({ rect: { x: -20, y: -44, w: w + 40, h: h + 104 }, title: `Buckets: level ${s.level}, N = ${s.Nl}` });
     }
     return finish(F);
   }
@@ -163,7 +163,7 @@
       }));
     });
     const widest = Math.max(BX + 12 + s.cap * SW, ...order.map((b) => BX + 12 + Math.max(s.cap, b.keys.length) * SW));
-    F.regions.push({ rect: { x: -16, y: -16, w: EW + 32, h: top + 32 }, title: `Directory — global depth d = ${s.gd}` });
+    F.regions.push({ rect: { x: -16, y: -16, w: EW + 32, h: top + 32 }, title: `Directory: global depth d = ${s.gd}` });
     F.regions.push({ rect: { x: BX - 16, y: -16, w: widest - BX + 32 + 70, h: top + 32 }, title: 'Buckets' });
     return finish(F);
   }

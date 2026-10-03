@@ -191,7 +191,7 @@
 
   function renderLog() {
     const op = opAt(T.cur);
-    el.stepsTitle.textContent = op ? `— ${op.label}` : '';
+    el.stepsTitle.textContent = op ? `· ${op.label}` : '';
     const from = op ? op.start : T.cur;
     const frag = document.createDocumentFragment();
     for (let i = from; i <= T.cur; i++) {
@@ -337,14 +337,14 @@
     const est = M.estimate(rows, prefs.disk);
     el.scaleRange.value = String(i);
     el.scaleOut.textContent = SCALE_NAMES[i];
-    el.scaleIntro.innerHTML = `In the demo the gap is <b>${M.DATA_PAGES} pages vs 3</b>. Real tables are far bigger — and the gap grows with them:`;
+    el.scaleIntro.innerHTML = `In the demo the gap is <b>${M.DATA_PAGES} pages vs 3</b>. Real tables are far bigger, and the gap grows with them:`;
     const pct = Math.max(0.6, (est.idxPages / est.scanPages) * 100);
     el.scaleTable.innerHTML =
       `<div class="sc-row sc-scan"><span class="sc-name">Full scan</span><span class="sc-val"><b>${fmtInt(est.scanPages)}</b> pages · ≈${fmtMs(est.scanMs)}</span><div class="sc-bar"><i style="width:100%"></i></div></div>` +
       `<div class="sc-row sc-index"><span class="sc-name">Index lookup</span><span class="sc-val"><b>${est.idxPages}</b> pages · ≈${fmtMs(est.idxMs)}</span><div class="sc-bar"><i style="width:${pct}%"></i></div></div>`;
     if (est.scanMs <= est.idxMs) {
       el.scaleVerdict.className = 'scale-verdict warn';
-      el.scaleVerdict.textContent = `Small table: reading all ${fmtInt(est.scanPages)} pages in one sweep beats ${est.idxPages} scattered reads on ${d.short === 'HDD' ? 'a hard disk' : 'an SSD'} — the database may skip the index here.`;
+      el.scaleVerdict.textContent = `Small table: reading all ${fmtInt(est.scanPages)} pages in one sweep beats ${est.idxPages} scattered reads on ${d.short === 'HDD' ? 'a hard disk' : 'an SSD'}, the database may skip the index here.`;
     } else {
       el.scaleVerdict.className = 'scale-verdict';
       el.scaleVerdict.textContent = `${fmtInt(est.scanPages / est.idxPages)}× fewer page reads · ≈${timesFaster(est.scanMs, est.idxMs)}× faster`;
@@ -375,14 +375,14 @@
     if (col === 'id') {
       const n = Number(raw);
       if (!/^\d{1,3}$/.test(raw) || n < 1 || n > M.MAX_ID) {
-        toast(`Type an id from 1 to ${M.MAX_ID} — or press the dice for one from the table.`);
+        toast(`Type an id from 1 to ${M.MAX_ID}, or press the dice for one from the table.`);
         el.val.focus();
         return null;
       }
       return { col, val: n };
     }
     if (!/^[A-Za-z]{1,12}$/.test(raw)) {
-      toast('Type a name, e.g. Nimal — or press the dice for one from the table.');
+      toast('Type a name, e.g. Nimal, or press the dice for one from the table.');
       el.val.focus();
       return null;
     }
@@ -408,7 +408,7 @@
     const steps = [
       ...engine.flush('Compare, round 1: empty RAM first, so the full scan starts from a cold cache.'),
       ...engine.runScan(q),
-      ...engine.flush('Round 2: empty RAM again, so the index lookup also starts cold — a fair race.'),
+      ...engine.flush('Round 2: empty RAM again, so the index lookup also starts cold, a fair race.'),
       ...engine.runIndex(q),
     ];
     queue(`Compare · ${where}`, steps);
@@ -504,7 +504,7 @@
     savePrefs();
     el.limitOne.blur();
     toast(prefs.limitOne
-      ? 'LIMIT 1: the full scan stops at the first match — on average it still reads half the table.'
+      ? 'LIMIT 1: the full scan stops at the first match, on average it still reads half the table.'
       : 'The full scan reads every page, even after a match.');
   });
 
@@ -518,8 +518,8 @@
       renderScale();
       const d = M.DISKS[v];
       resetTimeline(v === 'ssd'
-        ? `Storage: SSD. One page read now takes ≈${fmtMs(d.pageMs)} — 100× faster than a hard disk, but still about 1,000× slower than RAM. Fewer pages still means faster.`
-        : `Storage: hard disk. One page read takes ≈${fmtMs(d.pageMs)} — about 100,000× slower than RAM.`);
+        ? `Storage: SSD. One page read now takes ≈${fmtMs(d.pageMs)}, 100× faster than a hard disk, but still about 1,000× slower than RAM. Fewer pages still means faster.`
+        : `Storage: hard disk. One page read takes ≈${fmtMs(d.pageMs)}, about 100,000× slower than RAM.`);
     },
     frames: (v) => {
       prefs.frames = +v;
@@ -611,6 +611,6 @@
   syncSegs();
   setColumn(prefs.col);
   renderScale();
-  resetTimeline(`The students table is stored on disk in ${M.DATA_PAGES} pages. To check a row, its page must first be copied into RAM — and that is slow. Press Tour for a quick introduction, or Run a query.`);
+  resetTimeline(`The students table is stored on disk in ${M.DATA_PAGES} pages. To check a row, its page must first be copied into RAM, and that is slow. Press Tour for a quick introduction, or Run a query.`);
   requestAnimationFrame(loop);
 })();

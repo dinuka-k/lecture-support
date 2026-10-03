@@ -204,15 +204,15 @@
         <section>
           <h3>The four modes</h3>
           <ul>
-            <li><b>Hash table</b> — h(k) = k mod m picks a slot. Collisions are resolved by <b>chaining</b> (a list per bucket) or <b>open addressing</b>: linear probing, quadratic probing or double hashing. Deleting in open addressing leaves a "deleted" marker. Turn on auto-rehash to grow the table when the load factor α = n/m passes 0.75.</li>
-            <li><b>Disk hash index</b> — static hashing: N buckets, each a disk page with overflow pages. An equality lookup costs about one page read; a <b>range query</b> must read every page, because hashing scatters neighbouring keys.</li>
-            <li><b>Extendible hashing</b> — a directory of 2<sup>d</sup> pointers indexed by the last d bits of the hash. A full bucket splits; if its local depth equals the global depth, the directory doubles first.</li>
-            <li><b>Linear hashing</b> — no directory: buckets split one at a time in round-robin order, pointed to by <i>next</i>. An overflow anywhere triggers the split of bucket <i>next</i>. Buckets before next use h<sub>level+1</sub>.</li>
+            <li><b>Hash table</b>: h(k) = k mod m picks a slot. Collisions are resolved by <b>chaining</b> (a list per bucket) or <b>open addressing</b>: linear probing, quadratic probing or double hashing. Deleting in open addressing leaves a "deleted" marker. Turn on auto-rehash to grow the table when the load factor α = n/m passes 0.75.</li>
+            <li><b>Disk hash index</b>: static hashing: N buckets, each a disk page with overflow pages. An equality lookup costs about one page read; a <b>range query</b> must read every page, because hashing scatters neighbouring keys.</li>
+            <li><b>Extendible hashing</b>: a directory of 2<sup>d</sup> pointers indexed by the last d bits of the hash. A full bucket splits; if its local depth equals the global depth, the directory doubles first.</li>
+            <li><b>Linear hashing</b>: no directory: buckets split one at a time in round-robin order, pointed to by <i>next</i>. An overflow anywhere triggers the split of bucket <i>next</i>. Buckets before next use h<sub>level+1</sub>.</li>
           </ul>
           <h3>Try this</h3>
           <ul>
             <li>Press <b>Example</b> in each mode, then insert the suggested keys.</li>
-            <li>In the hash table, compare linear and quadratic probing on the same keys — watch the clusters.</li>
+            <li>In the hash table, compare linear and quadratic probing on the same keys, watch the clusters.</li>
             <li>In the disk index, run <b>Range</b> with <code>10-30</code> and count the page reads.</li>
           </ul>
         </section>
@@ -232,7 +232,7 @@
           <ul>
             <li>Keys are whole numbers 0–99. Every mode keeps its own keys and timeline, so you can switch back and forth.</li>
             <li>The hash function is kept simple (k mod m, or the key's own bits) so the arithmetic can be followed on the board.</li>
-            <li>Extendible hashing uses the <b>last</b> d bits (as in Ramakrishnan &amp; Gehrke); some books use the first bits — the idea is the same.</li>
+            <li>Extendible hashing uses the <b>last</b> d bits (as in Ramakrishnan &amp; Gehrke); some books use the first bits, the idea is the same.</li>
           </ul>
         </section>
       </div>

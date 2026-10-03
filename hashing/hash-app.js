@@ -177,7 +177,7 @@
   function renderLog() {
     const t = T();
     const op = opAt(t.cur);
-    el.stepsTitle.textContent = op ? `— ${op.label}` : '';
+    el.stepsTitle.textContent = op ? `· ${op.label}` : '';
     const from = op ? op.start : t.cur;
     const frag = document.createDocumentFragment();
     for (let i = from; i <= t.cur; i++) {
@@ -273,8 +273,8 @@
 
   function command(type, fromButton) {
     const { keys, bad } = parseKeys(el.input.value);
-    if (bad.length) return toast(`Keys must be whole numbers from 0 to ${A.MAX_KEY} — couldn't read “${bad.join(' ')}”.`);
-    if (!keys.length) { toast('Type a key first — e.g. 42, or several: 7, 18, 29'); el.input.focus(); return; }
+    if (bad.length) return toast(`Keys must be whole numbers from 0 to ${A.MAX_KEY}, couldn't read “${bad.join(' ')}”.`);
+    if (!keys.length) { toast('Type a key first, e.g. 42, or several: 7, 18, 29'); el.input.focus(); return; }
     const m = cur().model;
     keys.forEach((k) => queue(`${type[0].toUpperCase()}${type.slice(1)} ${k}`, m[type](k)));
     el.input.value = '';
@@ -326,7 +326,7 @@
     el.input.classList.remove('flash');
     void el.input.offsetWidth;
     el.input.classList.add('flash');
-    resetTimeline(`${ex.msg} (The keys to insert are already typed in — press Insert.)`);
+    resetTimeline(`${ex.msg} (The keys to insert are already typed in, press Insert.)`);
   }
 
   function clearAll() {

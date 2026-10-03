@@ -510,7 +510,7 @@
           this.i++;
           let arg = null;
           if (this.acceptOp('*')) {
-            if (fn !== 'COUNT') throw new SqlError(`${fn}(*) is not valid — only COUNT(*)`, tk.s, this.last.e);
+            if (fn !== 'COUNT') throw new SqlError(`${fn}(*) is not valid, only COUNT(*)`, tk.s, this.last.e);
           } else {
             if (this.isKw('DISTINCT')) this.unsupported(`${fn}(DISTINCT …)`);
             arg = this.parseAdd();
@@ -888,7 +888,7 @@
       if (ctx.where !== 'WHERE' || !ctx.top) {
         throw new SqlError('IN (SELECT …) is covered only as a WHERE condition joined with AND', e.s, e.end, 'Move it to WHERE, outside any OR / NOT.');
       }
-      if (e.not) throw new SqlError('NOT IN (SELECT …) is not covered in this demo', e.s, e.end, 'Try IN (SELECT …) — it becomes a semi join.');
+      if (e.not) throw new SqlError('NOT IN (SELECT …) is not covered in this demo', e.s, e.end, 'Try IN (SELECT …), it becomes a semi join.');
       const sub = e.sub;
       const subS = e.subS;
       if (sub.star || sub.items.length !== 1) throw new SqlError('The subquery must SELECT exactly one column', subS, sub.e, 'e.g. IN (SELECT e.student_id FROM enrollments e WHERE …)');

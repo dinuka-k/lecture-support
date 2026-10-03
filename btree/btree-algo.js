@@ -212,7 +212,7 @@
       const { x, i, found, path } = this.walk(R, k, 4);
       if (found) {
         R.snap({
-          msg: `Compare ${k} with ${fmt(x.keys)}: match — found ${k} after visiting ${plural(path.length + 1, 'node')}.`,
+          msg: `Compare ${k} with ${fmt(x.keys)}: match, found ${k} after visiting ${plural(path.length + 1, 'node')}.`,
           status: 'success',
           line: 2,
           nodes: { [x.id]: 'found' },
@@ -221,7 +221,7 @@
         });
       } else {
         R.snap({
-          msg: `Compare ${k} with ${fmt(x.keys)}: ${relation(x, k, i)}, but this is a leaf, so there is nowhere left to go — ${k} is not in the tree.`,
+          msg: `Compare ${k} with ${fmt(x.keys)}: ${relation(x, k, i)}, but this is a leaf, so there is nowhere left to go, ${k} is not in the tree.`,
           status: 'error',
           line: 3,
           nodes: { [x.id]: 'visit' },
@@ -240,7 +240,7 @@
         R.snap({ msg: `Insert ${k}: the tree is empty.`, line: 1, ghost: { key: k, node: null, gap: 0 } });
         this.root = newNode([k]);
         R.snap({
-          msg: `${k} becomes the root — a single leaf holding one key.`,
+          msg: `${k} becomes the root, a single leaf holding one key.`,
           status: 'success',
           line: 1,
           nodes: { [this.root.id]: 'new' },
@@ -273,7 +273,7 @@
       const over = x.keys.length > this.maxKeys;
       R.snap({
         msg: over
-          ? `The leaf is now ${fmt(x.keys)} — ${x.keys.length} keys, but a node may hold at most ${this.maxKeys}.`
+          ? `The leaf is now ${fmt(x.keys)}, ${x.keys.length} keys, but a node may hold at most ${this.maxKeys}.`
           : `The leaf is now ${fmt(x.keys)}: ${x.keys.length} of at most ${this.maxKeys} keys, so no split is needed.`,
         status: over ? 'warn' : 'info',
         line: over ? 9 : 8,
@@ -284,8 +284,8 @@
       const splits = this.fixOverflow(R, x, path, k);
       R.snap({
         msg: splits
-          ? `Done — ${k} inserted after ${plural(splits, 'split')}. Every node is back within ${plural(this.maxKeys, 'key')}; height is ${height(this.root)}.`
-          : `Done — ${k} inserted without any split.`,
+          ? `Done: ${k} inserted after ${plural(splits, 'split')}. Every node is back within ${plural(this.maxKeys, 'key')}; height is ${height(this.root)}.`
+          : `Done: ${k} inserted without any split.`,
         status: 'success',
         keys: { [k]: 'new' },
       });
@@ -351,14 +351,14 @@
       const R = new Recorder(this, 'delete', k, record);
       const min = this.minKeys;
       if (!this.root) {
-        R.snap({ msg: `The tree is empty — there is no ${k} to delete.`, status: 'error', line: 2 });
+        R.snap({ msg: `The tree is empty, there is no ${k} to delete.`, status: 'error', line: 2 });
         return R.steps;
       }
 
       let { x, i, found, path } = this.walk(R, k, 1);
       if (!found) {
         R.snap({
-          msg: `Compare ${k} with ${fmt(x.keys)}: ${relation(x, k, i)}, and this is a leaf — ${k} is not in the tree, so nothing is deleted.`,
+          msg: `Compare ${k} with ${fmt(x.keys)}: ${relation(x, k, i)}, and this is a leaf, so ${k} is not in the tree and nothing is deleted.`,
           status: 'error',
           line: 2,
           nodes: { [x.id]: 'visit' },
@@ -391,8 +391,8 @@
         let y = x.children[usePred ? i : i + 1];
         R.snap({
           msg: usePred
-            ? `Found ${k} in an internal node. It separates two subtrees, so replace it with its predecessor — the largest key in the subtree to its left.`
-            : `Found ${k} in an internal node. It separates two subtrees, so replace it with its successor — the smallest key in the subtree to its right.`,
+            ? `Found ${k} in an internal node. It separates two subtrees, so replace it with its predecessor, the largest key in the subtree to its left.`
+            : `Found ${k} in an internal node. It separates two subtrees, so replace it with its successor, the smallest key in the subtree to its right.`,
           line: 3,
           nodes: { [x.id]: 'visit' },
           keys: { [k]: 'delete' },
@@ -403,7 +403,7 @@
         while (!isLeaf(y)) {
           const next = usePred ? y.children[y.children.length - 1] : y.children[0];
           R.snap({
-            msg: `Not a leaf yet — keep going to the ${usePred ? 'rightmost' : 'leftmost'} child.`,
+            msg: `Not a leaf yet, keep going to the ${usePred ? 'rightmost' : 'leftmost'} child.`,
             line: 4,
             nodes: { [y.id]: 'visit' },
             keys: { [k]: 'delete' },
@@ -438,7 +438,7 @@
       if (this.root.keys.length === 0) {
         if (isLeaf(this.root)) {
           this.root = null;
-          R.snap({ msg: 'The root has no keys left — the tree is now empty.', line: 12 });
+          R.snap({ msg: 'The root has no keys left, the tree is now empty.', line: 12 });
         } else {
           const old = this.root;
           this.root = old.children[0];
@@ -453,8 +453,8 @@
 
       R.snap({
         msg: this.root
-          ? `Done — ${k} deleted. Every node except the root has at least ${plural(min, 'key')}.`
-          : `Done — ${k} deleted and the tree is empty.`,
+          ? `Done: ${k} deleted. Every node except the root has at least ${plural(min, 'key')}.`
+          : `Done: ${k} deleted and the tree is empty.`,
         status: 'success',
       });
       return R.steps;
@@ -541,7 +541,7 @@
         const parentUnder = isRoot ? parent.keys.length === 0 : parent.keys.length < min;
         R.snap({
           msg: `Merged into ${fmt(L.keys)}. The parent loses ${sep} and becomes ${fmt(parent.keys)}` +
-            (parentUnder ? (isRoot ? ' — the root is now empty.' : ' — now the parent underflows.') : '.'),
+            (parentUnder ? (isRoot ? ', the root is now empty.' : ', now the parent underflows.') : '.'),
           status: parentUnder ? 'warn' : 'info',
           line: 11,
           nodes: { [L.id]: 'merged', [parent.id]: parentUnder ? 'underflow' : 'visit' },

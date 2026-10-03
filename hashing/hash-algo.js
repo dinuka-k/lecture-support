@@ -45,7 +45,7 @@
     openInsert: [
       's ← h(k) = k mod m',
       'while slot[s] is occupied:',
-      '  if slot[s] = k: already there — stop',
+      '  if slot[s] = k: already there, stop',
       '  collision: i ← i + 1, s ← (h(k) + f(i)) mod m',
       'store k in slot[s]',
       'if n / m > 0.75: rehash ▹ when auto-rehash is on',
@@ -66,7 +66,7 @@
     chainInsert: [
       'b ← h(k) = k mod m',
       'for each node x in chain[b]:',
-      '  if x = k: already there — stop',
+      '  if x = k: already there, stop',
       'append k to chain[b]',
       'if n / m > 0.75: rehash ▹ when auto-rehash is on',
     ],
@@ -92,7 +92,7 @@
       'b ← h(k) = k mod N',
       'for each page P of bucket b:',
       '  read P from disk ▹ 1 I/O',
-      '  if k is in P: already there — stop',
+      '  if k is in P: already there, stop',
       'if no page has room: add an overflow page',
       'write k into the first page with room ▹ 1 I/O',
     ],
@@ -120,7 +120,7 @@
     extInsert: [
       'i ← last d bits of h(k) ▹ d = global depth',
       'B ← the bucket dir[i] points to',
-      'if B has room: put k in B — done',
+      'if B has room: put k in B, done',
       'if local depth(B) = d:',
       '  double the directory, d ← d + 1',
       'split B: local depth + 1, new bucket B′',
@@ -140,7 +140,7 @@
     linInsert: [
       'b ← h_level(k) = k mod N',
       'if b < next: b ← h_level+1(k) = k mod 2N ▹ already split',
-      'if bucket b has room: put k there — done',
+      'if bucket b has room: put k there, done',
       'else: add an overflow page to b and put k there',
       'split bucket next: rehash its keys with h_level+1',
       'next ← next + 1',
@@ -284,7 +284,7 @@
       if (this.strategy === 'double') rec.addCalc(`h₂(${k}) = ${this.R} − (${k} mod ${this.R}) = [[${this.h2(k)}]]`);
       rec.step(`Hash the key: h(${k}) = ${k} mod ${m} = ${h}, so slot ${h} is ${k}'s home slot.`, { line: 0, ghost: { key: k, at: 'calc' } });
       if (this.n === m) {
-        rec.step(`The table is full (n = m = ${m}) — there is no slot left for ${k}. It needs to grow: rehash into a bigger table.`, { status: 'error', ghost: { key: k, at: 'calc' } });
+        rec.step(`The table is full (n = m = ${m}), there is no slot left for ${k}. It needs to grow: rehash into a bigger table.`, { status: 'error', ghost: { key: k, at: 'calc' } });
         return false;
       }
       let tomb = -1;
@@ -302,20 +302,20 @@
           }
           this.slots[at] = { k };
           this.n++;
-          rec.step(i === 0 ? `Slot ${s} is free — store ${k} there. One probe, no collision.` : `Store ${k} in slot ${at}, after ${plural(i + 1, 'probe')}.`, {
+          rec.step(i === 0 ? `Slot ${s} is free, store ${k} there. One probe, no collision.` : `Store ${k} in slot ${at}, after ${plural(i + 1, 'probe')}.`, {
             line: 4, status: 'success', kh: { [k]: 'new' }, hl: { [this.sid(at)]: 'target' },
           });
           return true;
         }
         if (cell.tomb) {
           if (tomb < 0) tomb = s;
-          rec.step(`Slot ${s} holds a "deleted" marker. Remember it as a place to reuse, but keep probing — ${k} could still be further along.`, {
+          rec.step(`Slot ${s} holds a "deleted" marker. Remember it as a place to reuse, but keep probing, ${k} could still be further along.`, {
             line: 3, ghost: { key: k, at: this.sid(s) }, hl: { [this.sid(s)]: 'probe' },
           });
           continue;
         }
         if (cell.k === k) {
-          rec.step(`${k} is already in slot ${s} — a hash table stores each key only once.`, {
+          rec.step(`${k} is already in slot ${s}, a hash table stores each key only once.`, {
             line: 2, status: 'warn', kh: { [k]: 'found' }, hl: { [this.sid(s)]: 'probe' },
           });
           return false;
@@ -343,12 +343,12 @@
       for (let j = 0; j < chain.length; j++) {
         rec.probes = j + 1;
         if (chain[j] === k) {
-          rec.step(`${k} is already in bucket ${b}'s chain — a hash table stores each key only once.`, { line: 2, status: 'warn', kh: { [k]: 'found' }, hl: { [cid]: 'target' } });
+          rec.step(`${k} is already in bucket ${b}'s chain, a hash table stores each key only once.`, { line: 2, status: 'warn', kh: { [k]: 'found' }, hl: { [cid]: 'target' } });
           return false;
         }
         rec.step(j === 0
-          ? `Bucket ${b} already has keys (a collision): walk its chain to check for ${k}. Compare with ${chain[j]} — no.`
-          : `Next node: ${chain[j]} — not ${k}.`, {
+          ? `Bucket ${b} already has keys (a collision): walk its chain to check for ${k}. Compare with ${chain[j]}, no.`
+          : `Next node: ${chain[j]}, not ${k}.`, {
           line: 1, ghost: { key: k, at: cid }, hl: { [cid]: 'target' }, kh: { [chain[j]]: 'compare' },
         });
       }
@@ -356,7 +356,7 @@
       this.n++;
       rec.step(chain.length === 1
         ? `Bucket ${b} was empty: ${k} becomes the first node of its chain.`
-        : `End of the chain: append ${k}. Bucket ${b} now holds ${chain.length} keys — with chaining, a collision just makes the chain longer.`, {
+        : `End of the chain: append ${k}. Bucket ${b} now holds ${chain.length} keys, with chaining, a collision just makes the chain longer.`, {
         line: 3, status: 'success', kh: { [k]: 'new' }, hl: { [cid]: 'target' },
       });
       return true;
@@ -398,9 +398,9 @@
             rec.step(`Unlink the node: ${j === 0 ? 'the bucket now points' : 'the previous node now points'} to ${chain[j] != null ? chain[j] : 'nothing'}. ${k} is gone.`, { line: 2, status: 'success', hl: { [cid]: 'target' } });
             return;
           }
-          rec.step(`Compare with ${chain[j]} — not ${k}.`, { line: 1, ghost: { key: k, at: cid }, hl: { [cid]: 'target' }, kh: { [chain[j]]: 'compare' } });
+          rec.step(`Compare with ${chain[j]}, not ${k}.`, { line: 1, ghost: { key: k, at: cid }, hl: { [cid]: 'target' }, kh: { [chain[j]]: 'compare' } });
         }
-        rec.step(chain.length ? `End of bucket ${h}'s chain — ${k} is not in the table.` : `Bucket ${h} is empty — ${k} is not in the table.`, {
+        rec.step(chain.length ? `End of bucket ${h}'s chain, ${k} is not in the table.` : `Bucket ${h} is empty, ${k} is not in the table.`, {
           line: del ? 3 : 3, status: 'warn', ghost: { key: k, at: cid }, hl: { [cid]: 'target' },
         });
         return;
@@ -418,7 +418,7 @@
           return;
         }
         if (cell.tomb) {
-          rec.step(`Slot ${s} holds a "deleted" marker — not empty, so keep probing.`, { line: del ? 0 : 3, ghost: { key: k, at: id }, hl: { [id]: 'probe' } });
+          rec.step(`Slot ${s} holds a "deleted" marker, not empty, so keep probing.`, { line: del ? 0 : 3, ghost: { key: k, at: id }, hl: { [id]: 'probe' } });
           continue;
         }
         if (cell.k === k) {
@@ -429,14 +429,14 @@
           rec.step(`Found ${k} in slot ${s}.`, { line: 0, kh: { [k]: 'delete' }, hl: { [id]: 'target' } });
           this.slots[s] = { tomb: true };
           this.n--;
-          rec.step(`Replace ${k} with a "deleted" marker instead of emptying the slot — an empty slot would cut the probe path of keys stored after it.`, {
+          rec.step(`Replace ${k} with a "deleted" marker instead of emptying the slot, an empty slot would cut the probe path of keys stored after it.`, {
             line: 1, status: 'success', hl: { [id]: 'target' },
           });
           return;
         }
-        rec.step(`Slot ${s} holds ${cell.k}, not ${k} — follow the probe path.`, { line: del ? 0 : 3, ghost: { key: k, at: id }, hl: { [id]: 'probe' }, kh: { [cell.k]: 'compare' } });
+        rec.step(`Slot ${s} holds ${cell.k}, not ${k}, follow the probe path.`, { line: del ? 0 : 3, ghost: { key: k, at: id }, hl: { [id]: 'probe' }, kh: { [cell.k]: 'compare' } });
       }
-      rec.step(`Probed all ${m} slots — ${k} is not in the table.`, { line: del ? 3 : 4, status: 'warn', ghost: { key: k, at: 'calc' } });
+      rec.step(`Probed all ${m} slots, ${k} is not in the table.`, { line: del ? 3 : 4, status: 'warn', ghost: { key: k, at: 'calc' } });
     }
 
     rehash() {
@@ -450,7 +450,7 @@
       rec.code = CODE.rehash;
       rec.addCalc(`α = ${this.n} / ${oldM} = [[${(this.n / oldM).toFixed(2)}]]`);
       if (newM > MAX_M) {
-        rec.step(`The table would grow to ${newM} slots — more than this demo shows (${MAX_M}). Clear it or pick a smaller table.`, { status: 'warn' });
+        rec.step(`The table would grow to ${newM} slots, more than this demo shows (${MAX_M}). Clear it or pick a smaller table.`, { status: 'warn' });
         return;
       }
       rec.addCalc(`m' = next prime ≥ 2·${oldM} = [[${newM}]]`);
@@ -473,7 +473,7 @@
         settings: { m: 11 },
         keys: [54, 26, 93, 17, 77, 31],
         next: '44, 55, 20',
-        msg: 'Example: 54, 26, 93, 17, 77, 31 in a table of size 11. Now insert 44, 55 and 20 — all three land on a taken slot (44 mod 11 = 0, 55 mod 11 = 0, 20 mod 11 = 9).',
+        msg: 'Example: 54, 26, 93, 17, 77, 31 in a table of size 11. Now insert 44, 55 and 20, all three land on a taken slot (44 mod 11 = 0, 55 mod 11 = 0, 20 mod 11 = 9).',
       };
     }
   }
@@ -514,7 +514,7 @@
       const rec = record ? new Recorder(this, 'insert', k, CODE.diskInsert, `Insert ${k}`) : quiet();
       const b = this.h(k), pages = this.buckets[b];
       rec.addCalc(`h(${k}) = ${k} mod ${this.N} = [[${b}]]`);
-      rec.step(`Hash the key: h(${k}) = ${k} mod ${this.N} = ${b}. The hash value names the bucket directly — no tree to walk down.`, { line: 0, ghost: { key: k, at: 'calc' } });
+      rec.step(`Hash the key: h(${k}) = ${k} mod ${this.N} = ${b}. The hash value names the bucket directly, no tree to walk down.`, { line: 0, ghost: { key: k, at: 'calc' } });
       let room = -1;
       for (let j = 0; j < pages.length; j++) {
         rec.io.reads++;
@@ -524,21 +524,21 @@
           return rec.steps;
         }
         if (room < 0 && p.length < this.cap) room = j;
-        rec.step(`Read bucket ${b}'s ${this.pageName(j)} from disk (I/O #${rec.io.reads}): ${this.show(p)} — ${p.length < this.cap ? 'it has room' : 'full'}.${j < pages.length - 1 ? ' Follow the overflow chain.' : ''}`, {
+        rec.step(`Read bucket ${b}'s ${this.pageName(j)} from disk (I/O #${rec.io.reads}): ${this.show(p)}, ${p.length < this.cap ? 'it has room' : 'full'}.${j < pages.length - 1 ? ' Follow the overflow chain.' : ''}`, {
           line: 2, ghost: { key: k, at: this.pid(b, j) }, hl: { [this.pid(b, j)]: p.length < this.cap ? 'read' : 'full' },
         });
       }
       if (room < 0) {
         pages.push([]);
         room = pages.length - 1;
-        rec.step(`Every page of bucket ${b} is full, so allocate an overflow page and link it to the chain. A static hash index has a fixed number of buckets — it can only grow chains.`, {
+        rec.step(`Every page of bucket ${b} is full, so allocate an overflow page and link it to the chain. A static hash index has a fixed number of buckets, it can only grow chains.`, {
           line: 4, status: 'warn', ghost: { key: k, at: this.pid(b, room) }, hl: { [this.pid(b, room)]: 'new' },
         });
       }
       pages[room].push(k);
       this.n++;
       rec.io.writes++;
-      const long = pages.length >= 3 ? ` Bucket ${b} now spans ${pages.length} pages, so every lookup there costs up to ${pages.length} reads — dynamic hashing (extendible, linear) avoids this by adding buckets.` : '';
+      const long = pages.length >= 3 ? ` Bucket ${b} now spans ${pages.length} pages, so every lookup there costs up to ${pages.length} reads, dynamic hashing (extendible, linear) avoids this by adding buckets.` : '';
       rec.step(`Write ${k} into the ${this.pageName(room)} and save it (1 I/O). Total: ${plural(rec.io.reads, 'read')} + 1 write.${long}`, {
         line: 5, status: 'success', kh: { [k]: 'new' }, hl: { [this.pid(b, room)]: 'target' },
       });
@@ -554,12 +554,12 @@
         rec.io.reads++;
         const id = this.pid(b, j);
         if (pages[j].includes(k)) {
-          rec.step(`Read bucket ${b}'s ${this.pageName(j)} (I/O #${rec.io.reads}): found ${k}. ${rec.io.reads === 1 ? 'An equality lookup in a hash index costs about one page read — a B+-tree needs one per level.' : `${rec.io.reads} reads, because of the overflow chain.`}`, {
+          rec.step(`Read bucket ${b}'s ${this.pageName(j)} (I/O #${rec.io.reads}): found ${k}. ${rec.io.reads === 1 ? 'An equality lookup in a hash index costs about one page read, a B+-tree needs one per level.' : `${rec.io.reads} reads, because of the overflow chain.`}`, {
             line: 3, status: 'success', hl: { [id]: 'read' }, kh: { [k]: 'found' },
           });
           return rec.steps;
         }
-        rec.step(`Read bucket ${b}'s ${this.pageName(j)} (I/O #${rec.io.reads}): ${this.show(pages[j])} — no ${k}.${j < pages.length - 1 ? ' Follow the overflow chain.' : ''}`, {
+        rec.step(`Read bucket ${b}'s ${this.pageName(j)} (I/O #${rec.io.reads}): ${this.show(pages[j])}, no ${k}.${j < pages.length - 1 ? ' Follow the overflow chain.' : ''}`, {
           line: 2, ghost: { key: k, at: id }, hl: { [id]: 'read' },
         });
       }
@@ -587,7 +587,7 @@
         rec.step(`Remove ${k} and write the page back (1 I/O).`, { line: 2, status: 'success', hl: { [id]: 'target' } });
         if (j > 0 && pages[j].length === 0) {
           pages.splice(j, 1);
-          rec.step(`That overflow page is now empty — unlink it from the chain and free it.`, { line: 3, status: 'success' });
+          rec.step(`That overflow page is now empty, unlink it from the chain and free it.`, { line: 3, status: 'success' });
         }
         return rec.steps;
       }
@@ -616,7 +616,7 @@
       });
       const kh = {};
       found.forEach((x) => { kh[x] = 'found'; });
-      rec.step(`Done: ${plural(found.length, 'key')} in range, but it took ${plural(rec.io.reads, 'page read')} — the whole index. A B+-tree keeps keys sorted, so it would only read the leaves covering ${lo}–${hi}.`, {
+      rec.step(`Done: ${plural(found.length, 'key')} in range, but it took ${plural(rec.io.reads, 'page read')}, the whole index. A B+-tree keeps keys sorted, so it would only read the leaves covering ${lo}–${hi}.`, {
         line: 5, status: found.length ? 'success' : 'warn', kh,
       });
       return rec.steps;
@@ -627,7 +627,7 @@
         settings: { N: 4, cap: 2 },
         keys: [8, 5, 12, 9, 2, 7, 15],
         next: '16, 20',
-        msg: 'Example: bucket 0 already holds 8 and 12 (full). Insert 16 and 20 — both hash to bucket 0, so it needs an overflow page. Then search for 20, or try a range query such as 5-10.',
+        msg: 'Example: bucket 0 already holds 8 and 12 (full). Insert 16 and 20, both hash to bucket 0, so it needs an overflow page. Then search for 20, or try a range query such as 5-10.',
       };
     }
   }
@@ -725,7 +725,7 @@
           const hl = { [this.bid(B)]: 'full' };
           for (let j = old; j < 2 * old; j++) hl[this.eid(j)] = 'new';
           rec.addCalc(`directory doubled → d = [[${this.gd}]], ${this.dir.length} entries`);
-          rec.step(`Directory doubled to ${this.dir.length} entries (global depth ${this.gd}). Each new entry copies the pointer of its twin — ${bin(old, this.gd)} points where ${bin(0, this.gd)} does, and so on. No keys move yet.`, {
+          rec.step(`Directory doubled to ${this.dir.length} entries (global depth ${this.gd}). Each new entry copies the pointer of its twin, ${bin(old, this.gd)} points where ${bin(0, this.gd)} does, and so on. No keys move yet.`, {
             line: 4, ghost: { key: k, at: this.bid(B) }, hl,
           });
         }
@@ -740,7 +740,7 @@
         const kh = {};
         B2.keys.forEach((x) => { kh[x] = 'move'; });
         rec.addCalc(`split ${this.name(B)} on bit ${B.ld}: …[[1]]${bin(pat, B.ld - 1)} → ${this.name(B2)}`);
-        rec.step(`Split bucket ${this.name(B)}: both halves now have local depth ${B.ld}. Keys whose bit ${B.ld} (from the right) is 1 move to the new bucket ${this.name(B2)}${B2.keys.length ? ` (${B2.keys.join(', ')})` : ' — none do'}, and the entries ending in ${bin(pat | bit, B.ld)} now point to ${this.name(B2)}.`, {
+        rec.step(`Split bucket ${this.name(B)}: both halves now have local depth ${B.ld}. Keys whose bit ${B.ld} (from the right) is 1 move to the new bucket ${this.name(B2)}${B2.keys.length ? ` (${B2.keys.join(', ')})` : ', none do'}, and the entries ending in ${bin(pat | bit, B.ld)} now point to ${this.name(B2)}.`, {
           line: 6, ghost: { key: k, at: this.bid(B) }, hl: { [this.bid(B)]: 'split', [this.bid(B2)]: 'new' }, kh,
         });
       }
@@ -760,7 +760,7 @@
     search(k) {
       const rec = new Recorder(this, 'search', k, CODE.extSearch, `Search ${k}`);
       const { i, B } = this.lookup(k, rec);
-      if (B.keys.includes(k)) rec.step(`Found ${k} in bucket ${this.name(B)} — a lookup costs one directory entry plus one bucket.`, { line: 2, status: 'success', kh: { [k]: 'found' }, hl: { [this.eid(i)]: 'target', [this.bid(B)]: 'target' } });
+      if (B.keys.includes(k)) rec.step(`Found ${k} in bucket ${this.name(B)}, a lookup costs one directory entry plus one bucket.`, { line: 2, status: 'success', kh: { [k]: 'found' }, hl: { [this.eid(i)]: 'target', [this.bid(B)]: 'target' } });
       else rec.step(`${k} is not in bucket ${this.name(B)}, so it is not stored.`, { line: 2, status: 'warn', ghost: { key: k, at: this.bid(B) }, hl: { [this.bid(B)]: 'target' } });
       return rec.steps;
     }
@@ -770,7 +770,7 @@
       const { i, B } = this.lookup(k, rec);
       const at = B.keys.indexOf(k);
       if (at < 0) {
-        rec.step(`${k} is not in bucket ${this.name(B)} — nothing to delete.`, { line: 2, status: 'warn', ghost: { key: k, at: this.bid(B) } });
+        rec.step(`${k} is not in bucket ${this.name(B)}, nothing to delete.`, { line: 2, status: 'warn', ghost: { key: k, at: this.bid(B) } });
         return rec.steps;
       }
       rec.step(`Found ${k} in bucket ${this.name(B)}.`, { line: 2, kh: { [k]: 'delete' }, hl: { [this.eid(i)]: 'target', [this.bid(B)]: 'target' } });
@@ -785,7 +785,7 @@
         settings: { cap: 4 },
         keys: [32, 16, 4, 12, 1, 5, 21, 13, 10, 15, 7, 19],
         next: '20',
-        msg: 'Textbook example (Ramakrishnan & Gehrke): global depth 2, buckets of capacity 4. Insert 20 = 0010100₂: its bucket A (entry 00) is full and A\'s local depth equals the global depth — watch the directory double.',
+        msg: 'Textbook example (Ramakrishnan & Gehrke): global depth 2, buckets of capacity 4. Insert 20 = 0010100₂: its bucket A (entry 00) is full and A\'s local depth equals the global depth, watch the directory double.',
       };
     }
   }
@@ -842,7 +842,7 @@
     hashMsg(k) {
       const L = this.level, Nl = this.Nl, b0 = k % Nl;
       return b0 < this.next
-        ? `Hash the key: h${sub(L)}(${k}) = ${k} mod ${Nl} = ${b0}. Bucket ${b0} is before the split pointer (next = ${this.next}), so it has already split this round — use h${sub(L + 1)}(${k}) = ${k} mod ${2 * Nl} = ${k % (2 * Nl)} instead.`
+        ? `Hash the key: h${sub(L)}(${k}) = ${k} mod ${Nl} = ${b0}. Bucket ${b0} is before the split pointer (next = ${this.next}), so it has already split this round, use h${sub(L + 1)}(${k}) = ${k} mod ${2 * Nl} = ${k % (2 * Nl)} instead.`
         : `Hash the key: h${sub(L)}(${k}) = ${k} mod ${Nl} = ${b0}. Bucket ${b0} is at or after the split pointer (next = ${this.next}), so h${sub(L)} is final.`;
     }
 
@@ -860,7 +860,7 @@
       if (room >= 0) {
         pages[room].push(k);
         this.n++;
-        rec.step(`Bucket ${b} has room: store ${k}${room ? ` in its overflow page ${room}` : ''}. No split — linear hashing only splits when a page overflows.`, {
+        rec.step(`Bucket ${b} has room: store ${k}${room ? ` in its overflow page ${room}` : ''}. No split, linear hashing only splits when a page overflows.`, {
           line: 2, status: 'success', kh: { [k]: 'new' }, hl: { [this.pid(b, room)]: 'target' },
         });
         return rec.steps;
@@ -868,7 +868,7 @@
       pages.push([k]);
       this.n++;
       const s = this.next;
-      rec.step(`Bucket ${b} is full, so ${k} goes into a new overflow page. An overflow triggers one split — of bucket next = ${s}${b === s ? ' (here the same bucket)' : `, not of bucket ${b}`}. Buckets split in a fixed round-robin order.`, {
+      rec.step(`Bucket ${b} is full, so ${k} goes into a new overflow page. An overflow triggers one split, of bucket next = ${s}${b === s ? ' (here the same bucket)' : `, not of bucket ${b}`}. Buckets split in a fixed round-robin order.`, {
         line: 3, status: 'warn', kh: { [k]: 'new' }, hl: { [this.pid(b, pages.length - 1)]: 'new', [this.pid(s, 0)]: 'split' },
       });
       this.split(rec);
@@ -890,7 +890,7 @@
       const kh = {};
       go.forEach((x) => { kh[x] = 'move'; });
       rec.addCalc(`k mod ${2 * Nl} = ${s} → stay, = ${img} → [[move]]`);
-      rec.step(`Keys with k mod ${2 * Nl} = ${img} move to bucket ${img}${go.length ? ` (${go.join(', ')})` : ' — none do'}; ${stay.length ? `${stay.join(', ')} stay` : 'nothing stays'} in bucket ${s}.`, {
+      rec.step(`Keys with k mod ${2 * Nl} = ${img} move to bucket ${img}${go.length ? ` (${go.join(', ')})` : ', none do'}; ${stay.length ? `${stay.join(', ')} stay` : 'nothing stays'} in bucket ${s}.`, {
         line: 4, kh, hl: { [this.pid(s, 0)]: 'split', [this.pid(img, 0)]: 'new' },
       });
       this.next++;
@@ -932,13 +932,13 @@
       const pages = this.buckets[b];
       const j = pages.findIndex((p) => p.includes(k));
       if (j < 0) {
-        rec.step(`${k} is not in bucket ${b} — nothing to delete.`, { line: 2, status: 'warn', ghost: { key: k, at: this.pid(b, 0) } });
+        rec.step(`${k} is not in bucket ${b}, nothing to delete.`, { line: 2, status: 'warn', ghost: { key: k, at: this.pid(b, 0) } });
         return rec.steps;
       }
       rec.step(`Found ${k} in bucket ${b}.`, { line: 2, kh: { [k]: 'delete' }, hl: { [this.pid(b, j)]: 'target' } });
       this.buckets[b] = chunk(pages.flat().filter((x) => x !== k), this.cap);
       this.n--;
-      rec.step(`Removed ${k}${pages.length > this.buckets[b].length ? ' — and an overflow page is no longer needed' : ''}. (Linear hashing can also shrink by undoing splits; this demo doesn't.)`, {
+      rec.step(`Removed ${k}${pages.length > this.buckets[b].length ? ', and an overflow page is no longer needed' : ''}. (Linear hashing can also shrink by undoing splits; this demo doesn't.)`, {
         line: 2, status: 'success', hl: { [this.pid(b, 0)]: 'target' },
       });
       return rec.steps;
@@ -949,7 +949,7 @@
         settings: { N0: 4, cap: 4 },
         keys: [32, 44, 36, 9, 25, 5, 14, 18, 10, 30, 31, 35, 7, 11],
         next: '43, 37, 29',
-        msg: 'Textbook example (Ramakrishnan & Gehrke): 4 buckets of capacity 4, level 0, next = 0. Insert 43: bucket 3 is full, so it gets an overflow page — but bucket 0 (where next points) is the one that splits.',
+        msg: 'Textbook example (Ramakrishnan & Gehrke): 4 buckets of capacity 4, level 0, next = 0. Insert 43: bucket 3 is full, so it gets an overflow page, but bucket 0 (where next points) is the one that splits.',
       };
     }
   }

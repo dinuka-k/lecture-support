@@ -190,7 +190,7 @@
 
   function renderLog() {
     const op = opAt(T.cur);
-    el.stepsTitle.textContent = op ? `— ${op.label}` : '';
+    el.stepsTitle.textContent = op ? `· ${op.label}` : '';
     const from = op ? op.start : T.cur;
     const frag = document.createDocumentFragment();
     for (let i = from; i <= T.cur; i++) {
@@ -335,7 +335,7 @@
     el.scaleM.value = String(iM);
     el.scaleNOut.textContent = SCALE_NAMES[iN];
     el.scaleMOut.textContent = SCALE_NAMES[iM];
-    el.scaleIntro.innerHTML = `Here a nested loop makes <b>${t.n} × ${t.m} = ${t.n * t.m}</b> comparisons — no big deal. With real table sizes the gap explodes:`;
+    el.scaleIntro.innerHTML = `Here a nested loop makes <b>${t.n} × ${t.m} = ${t.n * t.m}</b> comparisons, no big deal. With real table sizes the gap explodes:`;
     const est = M.estimate(n, m);
     const rows = [
       ['nl', 'Nested loop', est.nl],
@@ -407,7 +407,7 @@
     savePrefs();
     engine.newData(prefs.seed);
     const t = engine.t;
-    resetTimeline(`New random tables: ${t.n} students and ${t.m} departments. Pick an algorithm and press Run — or Compare all.`);
+    resetTimeline(`New random tables: ${t.n} students and ${t.m} departments. Pick an algorithm and press Run, or Compare all.`);
   }
 
   // ---------- Wiring ----------

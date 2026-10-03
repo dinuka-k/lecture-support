@@ -199,12 +199,12 @@
         <section>
           <h3>The ideas</h3>
           <ul>
-            <li>A <b>join</b> pairs the rows of two tables that satisfy a condition — here <code>s.dept = d.id</code>. An <b>inner join</b> outputs only the pairs that match, so a student whose department doesn't exist is left out.</li>
+            <li>A <b>join</b> pairs the rows of two tables that satisfy a condition, here <code>s.dept = d.id</code>. An <b>inner join</b> outputs only the pairs that match, so a student whose department doesn't exist is left out.</li>
             <li>The database can compute the same result in different ways. The <b>query planner</b> picks the cheapest one from the table sizes, the indexes and the memory available.</li>
-            <li><b>Nested loop</b>: for each row of the outer table, scan the whole inner table. Always n × m comparisons — but it works for any condition.</li>
-            <li><b>Index nested loop</b>: the same outer loop, but each row is looked up in an <b>index</b> on the inner table's join column (here the B+ tree of the primary key <code>departments.id</code>): root → one leaf → one row. About log m comparisons per row, so n × log m in all — and the index already exists, so nothing is built per query.</li>
+            <li><b>Nested loop</b>: for each row of the outer table, scan the whole inner table. Always n × m comparisons, but it works for any condition.</li>
+            <li><b>Index nested loop</b>: the same outer loop, but each row is looked up in an <b>index</b> on the inner table's join column (here the B+ tree of the primary key <code>departments.id</code>): root → one leaf → one row. About log m comparisons per row, so n × log m in all, and the index already exists, so nothing is built per query.</li>
             <li><b>Hash join</b>: <i>build</i> a hash table on the smaller table, then <i>probe</i> it: each row of the other table looks in just one bucket. Roughly n + m work, but only for <code>=</code>, and the hash table needs memory.</li>
-            <li><b>Merge join</b>: sort both tables on the key, then move two pointers forward together. The merge itself is at most n + m comparisons; the sorting costs about n log n — nothing if the input is already sorted.</li>
+            <li><b>Merge join</b>: sort both tables on the key, then move two pointers forward together. The merge itself is at most n + m comparisons; the sorting costs about n log n, nothing if the input is already sorted.</li>
           </ul>
           <table class="algos">
             <tr><th></th><th>Work</th><th>Condition</th><th>Needs</th></tr>
@@ -215,7 +215,7 @@
           </table>
           <h3>Simplifications</h3>
           <ul>
-            <li>Everything is in RAM and the scoreboard counts operations. Real databases mostly count <b>disk page reads</b> — e.g. a block nested loop reads the inner table once per block of outer rows.</li>
+            <li>Everything is in RAM and the scoreboard counts operations. Real databases mostly count <b>disk page reads</b>, e.g. a block nested loop reads the inner table once per block of outer rows.</li>
             <li><code>departments.id</code> is unique, so the merge join never moves backwards. With duplicates on both sides it outputs every pair of the two matching groups.</li>
             <li>The index here is a two-level B+ tree with 3 keys per leaf; real ones hold hundreds of keys per page, so even huge tables need only 3–4 levels. The scoreboard counts one "index lookup" per student plus the key comparisons on the way down.</li>
             <li>Real hash tables have thousands of buckets. When the hash table doesn't fit in RAM, a <b>Grace hash join</b> first splits both tables into partitions on disk.</li>
@@ -225,10 +225,10 @@
           <h3>Try this</h3>
           <ul>
             <li>Press <b>Tour</b> for a guided introduction.</li>
-            <li>Press <b>Compare all</b>: watch the <b>pairs</b> matrix — full for the nested loop, two or three cells per student for the index lookups, sparse for the hash join, a staircase for the merge join.</li>
+            <li>Press <b>Compare all</b>: watch the <b>pairs</b> matrix, full for the nested loop, two or three cells per student for the index lookups, sparse for the hash join, a staircase for the merge join.</li>
             <li>Set <b>Hash buckets</b> to 2, then to 8: more buckets, fewer comparisons per probe.</li>
             <li>Pick <b>12 × 6</b> tables and run the nested loop.</li>
-            <li>Drag the <b>Bigger tables</b> sliders to a million rows — then set students to 100 and departments to 10 million: now the index nested loop wins.</li>
+            <li>Drag the <b>Bigger tables</b> sliders to a million rows, then set students to 100 and departments to 10 million: now the index nested loop wins.</li>
           </ul>
           <h3>Keyboard</h3>
           <table class="keys">

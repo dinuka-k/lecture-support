@@ -215,7 +215,7 @@
     optimize({ startPhase: 'plan' });
     el.sql.value = saved;
     updateEditor();
-    toast(`${why} — re-planning. The parser and rewriter steps are unchanged: rules never look at statistics.`);
+    toast(`${why}, re-planning. The parser and rewriter steps are unchanged: rules never look at statistics.`);
   }
 
   // ---------- Panels ----------
@@ -256,7 +256,7 @@
       frag.appendChild(li);
     });
     el.stepLog.replaceChildren(frag);
-    el.stepsTitle.textContent = T.run ? `— ${T.steps.length}` : '';
+    el.stepsTitle.textContent = T.run ? `· ${T.steps.length}` : '';
   }
 
   function renderLogState() {
@@ -431,7 +431,7 @@
     if (!b) return;
     const { t, c } = b.dataset;
     if (cat.pk(t) === c) {
-      toast(`${t}.${c} is the primary key — its index can’t be dropped.`);
+      toast(`${t}.${c} is the primary key, its index can’t be dropped.`);
       return;
     }
     const had = cat.isIndexed(t, c);

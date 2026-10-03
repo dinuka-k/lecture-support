@@ -1101,7 +1101,7 @@
       ctx.stroke();
       const sortN = F.live && b.kind === 'sort' ? (F.a && F.sameRun ? F.a.stats.sort : 0) + Math.round((b.stats.sort - (F.a && F.sameRun ? F.a.stats.sort : 0)) * F.e) : b.stats.sort;
       const rows = [
-        ['sort', `${sortN} comparisons`, 'n log n — free if the input is already sorted'],
+        ['sort', `${sortN} comparisons`, 'n log n, free if the input is already sorted'],
         ['merge', `${F.cells.size} comparisons`, `at most n + m = ${t.n + t.m}: pointers never go back`],
       ];
       rows.forEach(([name, val, note], k) => {

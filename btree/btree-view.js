@@ -421,7 +421,7 @@
       ctx.font = `500 15px ${this.font}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('Empty tree — drop a key here', 0, NODE_H / 2);
+      ctx.fillText('Empty tree: drop a key here', 0, NODE_H / 2);
     }
 
     paintEdges(FA, FB, geo, e) {

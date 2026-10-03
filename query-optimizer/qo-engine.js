@@ -151,7 +151,7 @@
         c.tone = 'scan';
         c.sym = 'table';
         c.head = r.name;
-        c.note = n.cols ? (n.cols.length ? `${n.cols.length} of ${all.length} columns: ${n.cols.join(', ')}` : 'no columns — only counts rows') : `all ${all.length} columns`;
+        c.note = n.cols ? (n.cols.length ? `${n.cols.length} of ${all.length} columns: ${n.cols.join(', ')}` : 'no columns, only counts rows') : `all ${all.length} columns`;
         break;
       }
       case 'select':
@@ -328,7 +328,7 @@
       const s = str(c, q);
       if (seen.has(s)) {
         keep[i] = false;
-        changes.push({ before: s, after: null, why: 'written twice — one copy is enough' });
+        changes.push({ before: s, after: null, why: 'written twice, one copy is enough' });
       } else seen.set(s, i);
     });
     const groups = new Map();
@@ -402,7 +402,7 @@
   }
 
   function whyFold(a, b) {
-    if (b.k === 'bool') return b.v ? 'always TRUE — filters nothing, dropped' : 'always FALSE';
+    if (b.k === 'bool') return b.v ? 'always TRUE, filters nothing, dropped' : 'always FALSE';
     const sa = JSON.stringify(a);
     if (sa.includes('"k":"not"')) return 'NOT removed by flipping the comparison';
     if (sa.includes('"k":"bin"') || sa.includes('"k":"neg"')) return 'arithmetic on constants done once, now';
@@ -474,7 +474,7 @@
     run() {
       this.R.add({
         phase: 'rewrite', title: 'Rewriter starts', line: 2, dur: 500,
-        msg: `The rewriter now applies ${RULES.length} rules, always in the same order. A rule fires wherever its pattern appears in the tree. Rules never look at table sizes or costs — each one is (almost) always a good idea.`,
+        msg: `The rewriter now applies ${RULES.length} rules, always in the same order. A rule fires wherever its pattern appears in the tree. Rules never look at table sizes or costs, each one is (almost) always a good idea.`,
         scene: this.scene(), board: this.board(-1, null),
       });
       const order = [this.unnest, this.simplify, this.redundant, this.split, this.pushdown, this.combine, this.transitive, this.prune];
@@ -493,8 +493,8 @@
       this.R.add({
         phase: 'rewrite', title: 'Rewrite finished', status: 'success', line: 3, dur: 600,
         msg: `Rewrite done: ${done} of ${RULES.length} rules changed the tree (${this.applied} change${this.applied === 1 ? '' : 's'}). ` + (this.q.rels.length > 1
-          ? 'Every table is now filtered first and tables are joined on conditions. Still open: which table to start with, how to read each one and how to join them — that needs statistics and costs.'
-          : 'Still open: the best way to read the table — that needs statistics and costs.'),
+          ? 'Every table is now filtered first and tables are joined on conditions. Still open: which table to start with, how to read each one and how to join them, that needs statistics and costs.'
+          : 'Still open: the best way to read the table, that needs statistics and costs.'),
         scene: this.scene(), board: this.board(-1, null),
       });
       return false;
@@ -565,7 +565,7 @@
         title: 'Simplify expressions', status: fals ? 'warn' : 'info',
         msg: `Work that gives the same answer for every row is done once, now: ${shown}${lines.length > 2 ? ` (+${lines.length - 2} more)` : ''}.` +
           (dropped ? ' A filter that is always TRUE removes nothing, so it disappears.' : '') +
-          (fals ? ' One condition is always FALSE — so no row can ever pass.' : ''),
+          (fals ? ' One condition is always FALSE, so no row can ever pass.' : ''),
         hl, detail: { lines },
       });
       if (fals) return this.toEmpty(i);
@@ -598,7 +598,7 @@
       if (!lines.length) { this.st[i].note = 'none found'; return; }
       this.step(i, {
         title: 'Remove redundant conditions',
-        msg: `${lines.map((l) => (l.after ? `${l.before} → ${l.after}` : `${l.before}: ${l.why}`)).slice(0, 2).join('; ')}. Fewer conditions to check for every row — the result is the same.`,
+        msg: `${lines.map((l) => (l.after ? `${l.before} → ${l.after}` : `${l.before}: ${l.why}`)).slice(0, 2).join('; ')}. Fewer conditions to check for every row, the result is the same.`,
         hl, detail: { lines },
       });
     }
@@ -613,7 +613,7 @@
       const count = this.q.aggregate && !this.q.group.length;
       this.step(i, {
         title: 'Empty result', status: 'success', dur: 1200,
-        msg: `A filter that is always FALSE means the answer is empty${count ? ' (COUNT(*) of no rows is a single row with 0)' : ''}. Everything below is replaced by “empty result”: no table will be read and nothing needs costing — a huge win found by rules alone.`,
+        msg: `A filter that is always FALSE means the answer is empty${count ? ' (COUNT(*) of no rows is a single row with 0)' : ''}. Everything below is replaced by “empty result”: no table will be read and nothing needs costing, a huge win found by rules alone.`,
         hl: { 'n:empty': 'good' }, detail: { text: 'The optimizer proved the result is empty without touching the data.' },
       }, false);
       return 'empty';
@@ -681,7 +681,7 @@
         this.step(i, {
           title: `Push ${p} down`, dur: 1300,
           msg: single
-            ? `${p} only uses ${names[0]}. It moves down to sit right on top of ${names[0]}, so rows are thrown away as soon as they are read — before any join has to handle them.`
+            ? `${p} only uses ${names[0]}. It moves down to sit right on top of ${names[0]}, so rows are thrown away as soon as they are read, before any join has to handle them.`
             : `${p} needs ${names.join(' and ')}, so it moves down to the × that first brings ${need.length === 2 ? 'those two tables' : 'those tables'} together.`,
           hl: { [s.id]: 'focus' },
           detail: { lines: [{ before: `σ ${p}`, after: single ? `directly on ${names[0]}` : `on ${names.join(' × ')}`, why: single ? 'filter before joining' : 'as low as both tables allow' }] },
@@ -718,7 +718,7 @@
         const cond = str(p.pred, q);
         this.step(i, {
           title: `× + ${cond} → ⋈`, dur: 1200,
-          msg: `${cond} sits right on the cross product of ${ln} and ${rn}. “Every pair, then keep the matching ones” is exactly a join — and a join can find the matching rows directly (with a hash table or an index) instead of building every pair first.`,
+          msg: `${cond} sits right on the cross product of ${ln} and ${rn}. “Every pair, then keep the matching ones” is exactly a join, and a join can find the matching rows directly (with a hash table or an index) instead of building every pair first.`,
           hl: { [p.id]: 'good' },
           detail: { lines: [{ before: `σ ${cond} ( ${L.join(' ')} × ${Rr.join(' ')} )`, after: `${L.join(' ')} ⋈ ${Rr.join(' ')}`, why: 'cross product + condition = join' }] },
         });
@@ -728,7 +728,7 @@
         const [L, Rr] = p.kids.map((k) => relsUnder(k).map((id) => this.rel(id).name).join(', '));
         this.step(i, {
           title: 'A cross product remains', status: 'warn', dur: 900,
-          msg: `No condition links ${L} with ${Rr}, so this × stays: every row of one side is paired with every row of the other. That is rarely intended — usually a join condition is missing from the query.`,
+          msg: `No condition links ${L} with ${Rr}, so this × stays: every row of one side is paired with every row of the other. That is rarely intended, usually a join condition is missing from the query.`,
           hl: { [p.id]: 'bad' },
           detail: { lines: [{ before: `${L} × ${Rr}`, after: 'stays ×', why: 'no condition connects them' }] },
         }, false);
@@ -803,7 +803,7 @@
       const d0 = derived[0];
       this.step(i, {
         title: 'Infer new conditions', dur: 1200,
-        msg: `${d0.via} means both columns are equal in every joined row, so ${d0.from} also implies ${d0.text}${derived.length > 1 ? ` (and ${derived.length - 1} more)` : ''}. The query never spelled this out, but now ${this.rel(d0.rel).name} can be filtered — maybe with an index — before the join.`,
+        msg: `${d0.via} means both columns are equal in every joined row, so ${d0.from} also implies ${d0.text}${derived.length > 1 ? ` (and ${derived.length - 1} more)` : ''}. The query never spelled this out, but now ${this.rel(d0.rel).name} can be filtered, maybe with an index, before the join.`,
         hl, detail: { lines: derived.map((d) => ({ before: `${d.via} AND ${d.from}`, after: d.text, why: 'new filter (derived)' })) },
       });
     }
@@ -835,7 +835,7 @@
         if (n.cols.length < all.length) {
           narrowed++;
           hl[n.id] = 'good';
-          lines.push({ before: `${r.name}: all ${all.length} columns`, after: n.cols.length ? n.cols.join(', ') : '(none — only counted)', why: `${all.length - n.cols.length} column${all.length - n.cols.length === 1 ? '' : 's'} never used` });
+          lines.push({ before: `${r.name}: all ${all.length} columns`, after: n.cols.length ? n.cols.join(', ') : '(none, only counted)', why: `${all.length - n.cols.length} column${all.length - n.cols.length === 1 ? '' : 's'} never used` });
         }
       });
       if (!narrowed) {
@@ -844,7 +844,7 @@
       }
       this.step(i, {
         title: 'Prune columns',
-        msg: `Each table delivers only the columns used further up (${lines.map((l) => l.before.split(':')[0] + ' → ' + l.after).slice(0, 2).join('; ')}). Narrower rows mean less data copied through every operator — the textbook “push π down”.${q.star ? ' SELECT * keeps every column of the main tables.' : ''}`,
+        msg: `Each table delivers only the columns used further up (${lines.map((l) => l.before.split(':')[0] + ' → ' + l.after).slice(0, 2).join('; ')}). Narrower rows mean less data copied through every operator, the textbook “push π down”.${q.star ? ' SELECT * keeps every column of the main tables.' : ''}`,
         hl, detail: { lines },
       });
     }
@@ -1494,7 +1494,7 @@
     R.add({
       phase: 'plan', title: 'Planner: tables and join conditions', line: 4, dur: 1400,
       msg: n === 1
-        ? `The planner (CBO) takes over. With one table there is no join order to choose — only how to read ${rels[0].name}.`
+        ? `The planner (CBO) takes over. With one table there is no join order to choose, only how to read ${rels[0].name}.`
         : `The planner (CBO) takes over. It flattens the tree into ${n} tables, each with its own filters, linked by ${G.edges.length} join condition${G.edges.length === 1 ? '' : 's'}. The tree’s join order is not final: the planner will try the orders and keep the cheapest.`,
       scene: gs(), board: {
         kind: 'graph',
@@ -1532,15 +1532,15 @@
       const idx = r.access.filter((a) => a.kind === 'index');
       let msg;
       if (b.kind === 'index') {
-        msg = `${r.name}: the index ${b.index} jumps straight to the ≈${fmtRows(b.k)} matching row${b.k < 1.5 ? '' : 's'} — cost ${fmtCost(b.cost)}, against ${fmtCost(r.access[0].cost)} for reading all ${fmtInt(r.pages)} pages. Index Scan wins.`;
+        msg = `${r.name}: the index ${b.index} jumps straight to the ≈${fmtRows(b.k)} matching row${b.k < 1.5 ? '' : 's'}, cost ${fmtCost(b.cost)}, against ${fmtCost(r.access[0].cost)} for reading all ${fmtInt(r.pages)} pages. Index Scan wins.`;
       } else if (idx.length) {
         const i0 = idx[0];
-        msg = `${r.name}: an index on ${i0.col} exists, but ≈${fmtRows(i0.k)} rows match and each needs its own random page read (cost ${fmtCost(i0.cost)}). Reading all ${fmtInt(r.pages)} pages in order is cheaper (${fmtCost(b.cost)}): Seq Scan wins — the index is ignored.`;
+        msg = `${r.name}: an index on ${i0.col} exists, but ≈${fmtRows(i0.k)} rows match and each needs its own random page read (cost ${fmtCost(i0.cost)}). Reading all ${fmtInt(r.pages)} pages in order is cheaper (${fmtCost(b.cost)}): Seq Scan wins, the index is ignored.`;
       } else if (!r.filters.length) {
-        msg = `${r.name} has no filter: all ${fmtInt(r.N)} rows are needed, so the only sensible way is a Seq Scan — cost ${fmtCost(b.cost)}.`;
+        msg = `${r.name} has no filter: all ${fmtInt(r.N)} rows are needed, so the only sensible way is a Seq Scan, cost ${fmtCost(b.cost)}.`;
       } else {
         const on = cat.indexesOf(r.table);
-        msg = `${r.name}: no index fits ${r.filters.length === 1 ? 'its filter' : 'its filters'}${on.length ? ` (there are indexes only on ${on.join(', ')})` : ' (the table has no index)'}, so the only access path is a Seq Scan — cost ${fmtCost(b.cost)}.`;
+        msg = `${r.name}: no index fits ${r.filters.length === 1 ? 'its filter' : 'its filters'}${on.length ? ` (there are indexes only on ${on.join(', ')})` : ' (the table has no index)'}, so the only access path is a Seq Scan, cost ${fmtCost(b.cost)}.`;
       }
       R.add({ phase: 'plan', title: `${r.id}: choose access path`, line: 7, dur: 1000, msg, scene: gs(), hl: { [node]: 'good' }, board: tb('acc') });
     });
@@ -1603,7 +1603,7 @@
       if (dp.cross) {
         R.add({
           phase: 'plan', title: 'Cross product needed', status: 'warn', line: 11, dur: 900,
-          msg: `No join condition connects ${dp.cross.comps.join(' and ')}. The planner has no choice but a cross product — every row paired with every row (≈${fmtRows(root.rows)} rows). Check the query for a missing join condition.`,
+          msg: `No join condition connects ${dp.cross.comps.join(' and ')}. The planner has no choice but a cross product, every row paired with every row (≈${fmtRows(root.rows)} rows). Check the query for a missing join condition.`,
           scene: gs({ sel: true, cross: true }), board: lattice(null),
         });
       }
@@ -1622,7 +1622,7 @@
         what: r.name,
         choice: b.kind === 'index' ? `Index Scan (${b.index})` : 'Seq Scan',
         why: b.kind === 'index' ? `≈${fmtRows(b.k)} matching rows: cheaper than reading ${fmtInt(r.pages)} pages`
-          : ix ? `index on ${ix.col} ignored: ≈${fmtRows(ix.k)} rows match — too many` : r.filters.length ? 'no index fits the filter' : 'every row is needed',
+          : ix ? `index on ${ix.col} ignored: ≈${fmtRows(ix.k)} rows match, too many` : r.filters.length ? 'no index fits the filter' : 'every row is needed',
       });
     });
     const joins = [];
@@ -1636,7 +1636,7 @@
     const ratio = rulesTop.cost / top.cost;
     R.add({
       phase: 'done', title: 'The execution plan', status: 'success', line: 12, dur: 1600,
-      msg: `Chosen plan: ${n > 1 ? planStr(root) + ', ' : ''}total cost ${fmtCost(top.cost)}, ≈${rowsTxt(top.rows)} in the result.${ratio > 1.05 ? ` A planner with rules only (FROM order, always use an index) would pay ${fmtCost(rulesTop.cost)} — ${times(rulesTop.cost, top.cost)}× more.` : ' Here the rules-only plan happens to cost the same.'} The plan now goes to the executor.`,
+      msg: `Chosen plan: ${n > 1 ? planStr(root) + ', ' : ''}total cost ${fmtCost(top.cost)}, ≈${rowsTxt(top.rows)} in the result.${ratio > 1.05 ? ` A planner with rules only (FROM order, always use an index) would pay ${fmtCost(rulesTop.cost)}, ${times(rulesTop.cost, top.cost)}× more.` : ' Here the rules-only plan happens to cost the same.'} The plan now goes to the executor.`,
       scene: finalScene,
       board: {
         kind: 'final', cost: top.cost, rows: top.rows, plan: n > 1 ? planStr(root) : rels[0].id,
@@ -1681,7 +1681,7 @@
 
     R.add({
       phase: 'parse', title: 'Parse the SQL text', line: 1, dur: 700,
-      msg: `The parser checks the grammar and cuts the query into clauses: ${clauseRows(ast).map((r) => r.kw).join(', ')}. So far these are just words — nothing is known about the tables yet.`,
+      msg: `The parser checks the grammar and cuts the query into clauses: ${clauseRows(ast).map((r) => r.kw).join(', ')}. So far these are just words, nothing is known about the tables yet.`,
       scene: { kind: 'list', cards: clauseCards(ast, null) },
       board: { kind: 'clauses', rows: clauseRows(ast) },
     });

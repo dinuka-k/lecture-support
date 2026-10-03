@@ -278,7 +278,7 @@
       this.snap(ctx, 'plan', {
         line: 0, dur: 450, hold: 2400,
         msg: `Plan: nested loop join. For every student (outer loop), go through every department (inner loop) and compare s.dept with d.id. That is ${n} × ${m} = ${n * m} comparisons, whatever the data.`,
-        panel: { text: `${n} × ${m} = ${n * m}`, sub: 'pairs to compare — all of them' },
+        panel: { text: `${n} × ${m} = ${n * m}`, sub: 'pairs to compare, all of them' },
       });
 
       t.students.forEach((st, k) => {
@@ -291,7 +291,7 @@
 
         let msg;
         if (k === 0) msg = `Outer loop, student 1 of ${n}: ${st.name} (dept ${st.key}). The inner loop compares ${st.key} with the id of every department in turn: ${t.depts.map((x) => x.key).join(', ')}.`;
-        else if (k === 1) msg = `Student 2: ${st.name} (dept ${st.key}). The inner loop starts again at the first department — all ${m} are compared again.`;
+        else if (k === 1) msg = `Student 2: ${st.name} (dept ${st.key}). The inner loop starts again at the first department, all ${m} are compared again.`;
         else msg = `${st.name} (dept ${st.key}): ${m} more comparisons.`;
         if (d) msg += ` Match with ${d.key} ${d.name} → output the joined row.${k < 2 ? ' The inner loop still checks the remaining departments: it doesn’t know ids are unique.' : ''}`;
         else msg += ` No department has id ${st.key}, so ${st.name} produces no row.`;
@@ -382,7 +382,7 @@
           msg = `Student 2: ${st.name} (dept ${st.key}). Again root → one leaf → one row: ${plural(items.length, 'comparison')}, and the other departments are never touched.`
             + (hit ? ` Match with ${hit.key} ${hit.name} → output.` : ` No department ${st.key} → no row.`);
         } else {
-          msg = `${st.name} (dept ${st.key}): ${plural(items.length, 'comparison')} in the index` + (hit ? ` → row ${hit.i + 1}, ${hit.name}.` : ` — no department ${st.key}, so no row.`);
+          msg = `${st.name} (dept ${st.key}): ${plural(items.length, 'comparison')} in the index` + (hit ? ` → row ${hit.i + 1}, ${hit.name}.` : `, no department ${st.key}, so no row.`);
         }
         this.snap(ctx, 'lookup', {
           line: hit ? 4 : 3, sCur: st.i,
@@ -400,7 +400,7 @@
       const s = ctx.stats;
       this.finish(ctx, 'inl', {
         line: 5,
-        msg: `Done: ${plural(s.out, 'row')} from ${s.look} index lookups with ${s.cmp} key comparisons — a plain nested loop needs ${n * m}. Each lookup costs about log₂ m comparisons, so the work grows like n × log m, and nothing had to be built or sorted: the index already existed.`,
+        msg: `Done: ${plural(s.out, 'row')} from ${s.look} index lookups with ${s.cmp} key comparisons, a plain nested loop needs ${n * m}. Each lookup costs about log₂ m comparisons, so the work grows like n × log m, and nothing had to be built or sorted: the index already existed.`,
         panel: { text: `${s.out} rows`, sub: `${s.look} lookups · ${s.cmp} comparisons` },
       });
       return ctx.steps;
@@ -460,14 +460,14 @@
           ? `Probe: ${st.name} has dept ${st.key}. h(${st.key}) = ${st.key} mod ${B} = ${b}, so only bucket ${b} needs searching`
           : `${st.name}: h(${st.key}) = ${b} → bucket ${b}`;
         if (!items.length) {
-          msg += ` — it is empty: no match, without a single comparison.`;
+          msg += `: it is empty: no match, without a single comparison.`;
         } else {
           msg += k === 0 ? `: ${plural(items.length, 'comparison')} instead of ${m}.` : ` (${plural(items.length, 'comparison')}).`;
           if (d) msg += ` Match with ${d.key} ${d.name} → output.`;
           else msg += ` No department ${st.key} there → no row.`;
           if (misses.length && !explainedCollision) {
             explainedCollision = true;
-            msg += ` ${listAnd(misses)} ${misses.length === 1 ? 'shares' : 'share'} the bucket but ${misses.length === 1 ? 'is' : 'are'} not ${st.key}: same hash, different key — so the keys are still compared.`;
+            msg += ` ${listAnd(misses)} ${misses.length === 1 ? 'shares' : 'share'} the bucket but ${misses.length === 1 ? 'is' : 'are'} not ${st.key}: same hash, different key, so the keys are still compared.`;
           }
         }
         this.snap(ctx, 'probe', {
@@ -485,7 +485,7 @@
       const s = ctx.stats;
       this.finish(ctx, 'hash', {
         line: 5,
-        msg: `Done: ${plural(s.out, 'row')} with only ${plural(s.cmp, 'key comparison')} (+ ${s.hash} hash computations) — a nested loop needs ${n * m}. Each row is hashed once, so the work grows like n + m. The catch: equality (=) joins only, and the hash table must fit in RAM.`,
+        msg: `Done: ${plural(s.out, 'row')} with only ${plural(s.cmp, 'key comparison')} (+ ${s.hash} hash computations), a nested loop needs ${n * m}. Each row is hashed once, so the work grows like n + m. The catch: equality (=) joins only, and the hash table must fit in RAM.`,
         panel: { text: `${s.out} rows`, sub: `${s.cmp} comparisons + ${s.hash} hashes` },
       });
       return ctx.steps;
@@ -500,7 +500,7 @@
 
       this.snap(ctx, 'plan', {
         line: 0, dur: 450, hold: 2400,
-        msg: 'Plan: merge join. First sort both tables on the join key. Then walk down the two sorted lists together, like merging two sorted piles of cards — each pointer only ever moves forward.',
+        msg: 'Plan: merge join. First sort both tables on the join key. Then walk down the two sorted lists together, like merging two sorted piles of cards, each pointer only ever moves forward.',
         panel: { text: 'sort, then merge', sub: 'two pointers, never going back' },
       });
 
@@ -518,7 +518,7 @@
       ctx.stats.sort += ds.cmp;
       this.snap(ctx, 'sort', {
         line: 1, sorting: 'd', dur: 1500, hold: 1800,
-        msg: `Sort departments by id: ${ds.cmp} more comparisons. Sorting is the expensive part of a merge join — unless the rows already come sorted, e.g. read through an index.`,
+        msg: `Sort departments by id: ${ds.cmp} more comparisons. Sorting is the expensive part of a merge join, unless the rows already come sorted, e.g. read through an index.`,
         panel: { text: 'departments by id', sub: `sorted with ${ds.cmp} comparisons` },
       });
 
@@ -592,9 +592,9 @@
       const say = (spot, msg) => this.snap(ctx, 'tour', { spot, msg, dur: 600, hold: 7000 });
       say('s', 'This is the students table, the left input of the join. Each student row stores the number of their department in the dept column.');
       say('d', 'This is the departments table, the right input. id is its primary key: no two departments share an id.');
-      say('sql', 'The query: SELECT * FROM students s JOIN departments d ON s.dept = d.id — pair every student with the department whose id equals their dept.');
+      say('sql', 'The query: SELECT * FROM students s JOIN departments d ON s.dept = d.id, pair every student with the department whose id equals their dept.');
       say('result', `The result gets one row per matching pair. No department has id ${o.key}, so ${o.name} will be left out: an inner join keeps only the pairs that match.`);
-      say('matrix', `Each cell is one possible pair: ${t.n} × ${t.m} = ${t.n * t.m} pairs. Whenever an algorithm compares s.dept with d.id, that cell lights up — green for a match. Fewer lit cells = less work.`);
+      say('matrix', `Each cell is one possible pair: ${t.n} × ${t.m} = ${t.n * t.m} pairs. Whenever an algorithm compares s.dept with d.id, that cell lights up, green for a match. Fewer lit cells = less work.`);
       say('work', 'The join engine shows each algorithm’s trick: a nested loop tries every pair, an index nested loop looks each student up in the index on departments.id, a hash join first puts the departments into buckets, and a merge join sorts both tables and walks them together.');
       say('board', 'The scoreboard counts the work: key comparisons, plus index lookups, hashing or sorting. Press Compare all to run the four algorithms on the same tables.');
       return ctx.steps;

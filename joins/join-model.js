@@ -1,7 +1,8 @@
 /*
  * Model for the joins demo: two small tables (students and departments) joined
  * on students.dept = departments.id, and recorders that turn each join
- * algorithm — nested loop, hash join, merge join — into animation steps.
+ * algorithm — nested loop, index nested loop, hash join, merge join — into
+ * animation steps.
  * Every step is a full snapshot, so playback can jump back and forth freely.
  */
 (function (global) {
@@ -15,13 +16,15 @@
   };
   const MAX_KEY = 9;
   const DEPTS = ['', 'Computing', 'Electrical', 'Mechanical', 'Civil', 'Chemical', 'Physics', 'Maths', 'Biology', 'Business'];
-  const LANES = ['nl', 'hash', 'merge'];
+  const LANES = ['nl', 'inl', 'hash', 'merge'];
   const ALGOS = {
     nl: { name: 'Nested loop join', short: 'Nested loop' },
+    inl: { name: 'Index nested loop join', short: 'Index nested loop' },
     hash: { name: 'Hash join', short: 'Hash join' },
     merge: { name: 'Merge join', short: 'Merge join' },
   };
   const OP_NS = 10; // "bigger tables" estimate: one comparison or hash ≈ 10 ns, all in RAM
+  const LEAF_KEYS = 3; // entries per leaf of the index on departments.id
 
   const NAMES = [
     'Nimal', 'Kasun', 'Amaya', 'Saman', 'Dilini', 'Ruwan', 'Chamari', 'Ishara', 'Kavindu', 'Sachini',
@@ -36,6 +39,14 @@
       'for each student s in students: ▹ outer loop',
       '  for each department d in departments: ▹ inner loop',
       '    if s.dept = d.id: output (s, d)',
+      'return the result',
+    ],
+    inl: [
+      'for each student s in students: ▹ outer loop',
+      '  look up s.dept in the index on departments.id ▹ B+ tree, already exists',
+      '    root: pick the leaf whose range holds s.dept',
+      '    leaf: binary-search s.dept',
+      '  if found (→ row r): output (s, departments[r]) ▹ fetch one row',
       'return the result',
     ],
     hash: [
@@ -150,12 +161,23 @@
       name,
       key: i === orphan ? missing[Math.floor(rnd() * missing.length)] : ids[Math.floor(rnd() * ids.length)],
     }));
-    return { seed, size: sizeKey, n: size.n, m: size.m, students, depts };
+    return { seed, size: sizeKey, n: size.n, m: size.m, students, depts, index: makeIndex(depts) };
+  }
+
+  // The primary-key index on departments.id: a two-level B+ tree. Each leaf entry
+  // points to the department's row; the root holds the first key of every leaf but the first.
+  function makeIndex(depts) {
+    const sorted = depts.slice().sort((a, b) => a.key - b.key);
+    const leaves = [];
+    for (let i = 0; i < sorted.length; i += LEAF_KEYS) {
+      leaves.push({ entries: sorted.slice(i, i + LEAF_KEYS).map((d) => ({ key: d.key, di: d.i })) });
+    }
+    return { root: { keys: leaves.slice(1).map((lf) => lf.entries[0].key) }, leaves };
   }
 
   // ---------- Engine: step recorders ----------
 
-  const zeroStats = () => ({ cmp: 0, hash: 0, sort: 0, out: 0 });
+  const zeroStats = () => ({ cmp: 0, hash: 0, sort: 0, look: 0, out: 0 });
   const cellKey = (si, di) => `${si},${di}`;
 
   class Engine {
@@ -166,7 +188,7 @@
       this.clearBoard();
     }
 
-    clearBoard() { this.board = { nl: null, hash: null, merge: null }; }
+    clearBoard() { this.board = { nl: null, inl: null, hash: null, merge: null }; }
 
     newData(seed) {
       this.opts.seed = seed;
@@ -291,6 +313,95 @@
         line: 3,
         msg: `Done: ${plural(s.out, 'row')} from ${n} × ${m} = ${s.cmp} comparisons. A nested loop compares every pair, so its work grows like n × m: make both tables 10× bigger and it does 100× the work.`,
         panel: { text: `${s.out} rows`, sub: `${s.cmp} comparisons for ${n * m} pairs` },
+      });
+      return ctx.steps;
+    }
+
+    // ---------- Index nested loop join ----------
+
+    runIndexNested() {
+      const t = this.t;
+      const { n, m } = t;
+      const { root, leaves } = t.index;
+      const byKey = {};
+      t.depts.forEach((d) => { byKey[d.key] = d; });
+      const ctx = this.begin('inl', { lane: 'inl', label: 'Index nested loop join', code: CODE.inl });
+
+      this.snap(ctx, 'plan', {
+        line: 1, dur: 450, hold: 2600,
+        msg: `Plan: index nested loop join. departments.id is the primary key, so the database already keeps an index on it: a small B+ tree sorted by id. For each student, look its dept up in the index instead of comparing it with all ${m} departments.`,
+        panel: { text: 'look up, don’t scan', sub: `${n} lookups in the index on departments.id` },
+      });
+
+      t.students.forEach((st, k) => {
+        const items = [];
+        // Root: the separator keys send the search to one leaf.
+        let c = 0;
+        while (c < root.keys.length && st.key >= root.keys[c]) {
+          const sep = root.keys[c];
+          items.push({ si: st.i, di: byKey[sep].i, res: 'no', node: 'root', ki: c, dir: 'down', text: `${st.key} ≥ ${sep}`, note: `root: not below ${sep} → keep going right` });
+          c++;
+        }
+        if (c < root.keys.length) {
+          const sep = root.keys[c];
+          items.push({ si: st.i, di: byKey[sep].i, res: 'no', node: 'root', ki: c, dir: 'down', text: `${st.key} < ${sep}`, note: `root: ${st.key} < ${sep} → leaf ${c + 1}` });
+        } else if (items.length) {
+          items[items.length - 1].note = `root: ${st.key} ≥ ${root.keys[c - 1]} → leaf ${c + 1}`;
+        }
+        // Leaf: binary search in its sorted entries.
+        const leaf = leaves[c];
+        const e = leaf.entries;
+        let lo = 0, hi = e.length - 1, at = -1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          const key = e[mid].key;
+          if (key === st.key) {
+            at = mid;
+            items.push({ si: st.i, di: e[mid].di, res: 'yes', node: 'leaf', leaf: c, ki: mid, text: `${st.key} = ${key}`, note: `leaf ${c + 1}: found → row ${e[mid].di + 1} of departments` });
+            break;
+          }
+          const right = key < st.key;
+          items.push({ si: st.i, di: e[mid].di, res: 'no', node: 'leaf', leaf: c, ki: mid, dir: right ? 'right' : 'left', text: `${st.key} ${right ? '>' : '<'} ${key}`, note: `leaf ${c + 1}: look ${right ? 'right' : 'left'}` });
+          if (right) lo = mid + 1;
+          else hi = mid - 1;
+        }
+        const hit = at >= 0 ? t.depts[e[at].di] : null;
+        if (!hit) Object.assign(items[items.length - 1], { note: `leaf ${c + 1}: no ${st.key} here`, dir: 'no' });
+        ctx.stats.cmp += items.length;
+        ctx.stats.look++;
+        if (hit) this.output(ctx, st.i, hit.i);
+        ctx.marks[st.i] = hit ? 'yes' : 'no';
+
+        const rootWhy = items.find((it) => it.node === 'root' && it.text.includes('<'))?.text || items[0].text;
+        let msg;
+        if (k === 0) {
+          msg = `Student 1 of ${n}: ${st.name} (dept ${st.key}). Root: ${rootWhy}, so only leaf ${c + 1} can hold it. Binary search in the leaf`
+            + (hit ? ` finds ${st.key} → row ${hit.i + 1} of departments: fetch just that row. ${plural(items.length, 'comparison')} instead of ${m}.`
+              : ` finds no ${st.key}: no such department.`);
+        } else if (k === 1) {
+          msg = `Student 2: ${st.name} (dept ${st.key}). Again root → one leaf → one row: ${plural(items.length, 'comparison')}, and the other departments are never touched.`
+            + (hit ? ` Match with ${hit.key} ${hit.name} → output.` : ` No department ${st.key} → no row.`);
+        } else {
+          msg = `${st.name} (dept ${st.key}): ${plural(items.length, 'comparison')} in the index` + (hit ? ` → row ${hit.i + 1}, ${hit.name}.` : ` — no department ${st.key}, so no row.`);
+        }
+        this.snap(ctx, 'lookup', {
+          line: hit ? 4 : 3, sCur: st.i,
+          seq: { items, t0: 0.08, t1: 0.7 },
+          fetch: hit ? { di: hit.i, leaf: c, ki: at } : null,
+          dur: (k < 2 ? 650 : 420) * items.length + 600, hold: k < 2 ? 2400 : hit ? 650 : 900,
+          msg, status: hit ? 'success' : 'warn',
+          panel: hit
+            ? { text: `${st.key} = ${hit.key}`, sub: `${st.name} → row ${hit.i + 1}: ${hit.name}`, verdict: 'yes' }
+            : { text: `no id ${st.key}`, sub: `${st.name}: not in the index`, verdict: 'no' },
+        });
+        this.addCells(ctx, items);
+      });
+
+      const s = ctx.stats;
+      this.finish(ctx, 'inl', {
+        line: 5,
+        msg: `Done: ${plural(s.out, 'row')} from ${s.look} index lookups with ${s.cmp} key comparisons — a plain nested loop needs ${n * m}. Each lookup costs about log₂ m comparisons, so the work grows like n × log m, and nothing had to be built or sorted: the index already existed.`,
+        panel: { text: `${s.out} rows`, sub: `${s.look} lookups · ${s.cmp} comparisons` },
       });
       return ctx.steps;
     }
@@ -484,8 +595,8 @@
       say('sql', 'The query: SELECT * FROM students s JOIN departments d ON s.dept = d.id — pair every student with the department whose id equals their dept.');
       say('result', `The result gets one row per matching pair. No department has id ${o.key}, so ${o.name} will be left out: an inner join keeps only the pairs that match.`);
       say('matrix', `Each cell is one possible pair: ${t.n} × ${t.m} = ${t.n * t.m} pairs. Whenever an algorithm compares s.dept with d.id, that cell lights up — green for a match. Fewer lit cells = less work.`);
-      say('work', 'The join engine shows each algorithm’s trick: a nested loop tries every pair, a hash join first sorts the departments into buckets, and a merge join sorts both tables and walks them together.');
-      say('board', 'The scoreboard counts the work: key comparisons, plus hashing or sorting. Press Compare all to run the three algorithms on the same tables.');
+      say('work', 'The join engine shows each algorithm’s trick: a nested loop tries every pair, an index nested loop looks each student up in the index on departments.id, a hash join first puts the departments into buckets, and a merge join sorts both tables and walks them together.');
+      say('board', 'The scoreboard counts the work: key comparisons, plus index lookups, hashing or sorting. Press Compare all to run the four algorithms on the same tables.');
       return ctx.steps;
     }
   }
@@ -497,6 +608,7 @@
     const lg = (x) => Math.max(1, Math.log2(x));
     return {
       nl: n * m,
+      inl: n * (lg(m) + 1), // per student: one lookup, ≈ log₂ m comparisons down the index
       hash: m + 2 * n, // hash each department, then hash + compare each student (~1 entry per bucket)
       merge: n * lg(n) + m * lg(m) + n + m,
       sorted: n + m, // inputs already sorted: only the merge pass
@@ -505,6 +617,6 @@
 
   global.JoinModel = {
     Engine, makeTables, sortCount, estimate, fmtMs, fmtInt, plural, timesFaster, cellKey,
-    SIZES, DEPTS, LANES, ALGOS, CODE, MAX_KEY, OP_NS,
+    SIZES, DEPTS, LANES, ALGOS, CODE, MAX_KEY, OP_NS, LEAF_KEYS,
   };
 })(window);

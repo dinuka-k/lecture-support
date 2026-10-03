@@ -37,15 +37,16 @@
       <div class="group">
         <div class="seg seg-algo" id="segAlgo" data-prop="algo" role="group" aria-label="Join algorithm">
           <button data-v="nl" title="Compare every student with every department (1)">Nested loop</button>
-          <button data-v="hash" title="Build a hash table on departments, probe it with each student (2)">Hash join</button>
-          <button data-v="merge" title="Sort both tables, then merge them in one pass (3)">Merge join</button>
+          <button data-v="inl" title="Look each student up in the index on departments.id (2)">Index nested loop</button>
+          <button data-v="hash" title="Build a hash table on departments, probe it with each student (3)">Hash join</button>
+          <button data-v="merge" title="Sort both tables, then merge them in one pass (4)">Merge join</button>
         </div>
         <button id="btnRun" class="btn btn-primary" title="Run the selected join (Enter / R)"><svg class="icon"><use href="#i-play"/></svg>Run</button>
       </div>
 
       <div class="group">
-        <button id="btnCompare" class="btn" title="Run all three algorithms on the same tables (C)">Compare all</button>
-        <button id="btnNewData" class="btn" title="New random tables (D)"><svg class="icon"><use href="#i-dice"/></svg>New tables</button>
+        <button id="btnCompare" class="btn" title="Run all four algorithms on the same tables (C)">Compare all</button>
+        <button id="btnNewData" class="btn btn-icon" title="New random tables (D)" aria-label="New random tables"><svg class="icon"><use href="#i-dice"/></svg></button>
         <button id="btnTour" class="btn" title="A one-minute guided introduction (T)"><svg class="icon"><use href="#i-tour"/></svg>Tour</button>
       </div>
 
@@ -69,25 +70,33 @@
           <div class="toast" id="toast" role="status"></div>
 
           <div class="board" id="board" aria-label="Scoreboard">
+            <div class="lane lane-head" aria-hidden="true"><span></span><span>key comparisons</span><span>extra work</span><span>operations</span><span>total work</span></div>
             <div class="lane" data-lane="nl">
-              <div class="lane-name"><span class="dot"></span><div><b>Nested loop</b><small data-k="sub">not run yet</small></div></div>
-              <div class="lane-num"><b data-k="cmp">–</b><span>key comparisons</span></div>
-              <div class="lane-num"><b data-k="extra">–</b><span data-k="extraSub">no extra work</span></div>
-              <div class="lane-num lane-total"><b data-k="total">–</b><span>operations</span></div>
+              <div class="lane-name"><span class="dot"></span><b>Nested loop</b></div>
+              <div class="lane-num"><b data-k="cmp">–</b></div>
+              <div class="lane-num lane-extra"><b data-k="extra">–</b><span data-k="extraSub">none</span></div>
+              <div class="lane-num lane-total"><b data-k="total">–</b></div>
+              <div class="lane-bar"><div class="track"><i data-k="bar"></i></div><em data-k="tag"></em></div>
+            </div>
+            <div class="lane" data-lane="inl">
+              <div class="lane-name"><span class="dot"></span><b>Index nested loop</b></div>
+              <div class="lane-num"><b data-k="cmp">–</b></div>
+              <div class="lane-num lane-extra"><b data-k="extra">–</b><span data-k="extraSub">index lookups</span></div>
+              <div class="lane-num lane-total"><b data-k="total">–</b></div>
               <div class="lane-bar"><div class="track"><i data-k="bar"></i></div><em data-k="tag"></em></div>
             </div>
             <div class="lane" data-lane="hash">
-              <div class="lane-name"><span class="dot"></span><div><b>Hash join</b><small data-k="sub">not run yet</small></div></div>
-              <div class="lane-num"><b data-k="cmp">–</b><span>key comparisons</span></div>
-              <div class="lane-num"><b data-k="extra">–</b><span data-k="extraSub">hash computations</span></div>
-              <div class="lane-num lane-total"><b data-k="total">–</b><span>operations</span></div>
+              <div class="lane-name"><span class="dot"></span><b>Hash join</b></div>
+              <div class="lane-num"><b data-k="cmp">–</b></div>
+              <div class="lane-num lane-extra"><b data-k="extra">–</b><span data-k="extraSub">hashes</span></div>
+              <div class="lane-num lane-total"><b data-k="total">–</b></div>
               <div class="lane-bar"><div class="track"><i data-k="bar"></i></div><em data-k="tag"></em></div>
             </div>
             <div class="lane" data-lane="merge">
-              <div class="lane-name"><span class="dot"></span><div><b>Merge join</b><small data-k="sub">not run yet</small></div></div>
-              <div class="lane-num"><b data-k="cmp">–</b><span>key comparisons</span></div>
-              <div class="lane-num"><b data-k="extra">–</b><span data-k="extraSub">sort comparisons</span></div>
-              <div class="lane-num lane-total"><b data-k="total">–</b><span>operations</span></div>
+              <div class="lane-name"><span class="dot"></span><b>Merge join</b></div>
+              <div class="lane-num"><b data-k="cmp">–</b></div>
+              <div class="lane-num lane-extra"><b data-k="extra">–</b><span data-k="extraSub">sort comparisons</span></div>
+              <div class="lane-num lane-total"><b data-k="total">–</b></div>
               <div class="lane-bar"><div class="track"><i data-k="bar"></i></div><em data-k="tag"></em></div>
             </div>
           </div>
@@ -141,7 +150,8 @@
         <section class="panel">
           <h2>Which join when?</h2>
           <dl class="cheat">
-            <div class="ch-nl"><dt>Nested loop</dt><dd>Works for any join condition (&lt;, &gt;, ≠, LIKE …). Fine when one table is tiny — or when the inner table has an index on the join column (index nested loop).</dd></div>
+            <div class="ch-nl"><dt>Nested loop</dt><dd>Works for any join condition (&lt;, &gt;, ≠, LIKE …). Fine when one of the tables is tiny.</dd></div>
+            <div class="ch-inl"><dt>Index nested loop</dt><dd>The inner table has an index on the join column (often its primary key). Best when the outer side is small, e.g. after a WHERE filter: a few lookups, nothing to build or sort.</dd></div>
             <div class="ch-hash"><dt>Hash join</dt><dd>The usual choice for equality joins (=) on big, unsorted tables. Needs RAM for a hash table on the smaller table.</dd></div>
             <div class="ch-merge"><dt>Merge join</dt><dd>Best when both inputs already come sorted on the key (an index, or an earlier ORDER BY): then it is a single pass. Its output is sorted too.</dd></div>
           </dl>
@@ -173,6 +183,7 @@
             <li><span class="sw sw-untouched"></span>Never compared</li>
             <li><span class="sw sw-dropped"></span>No partner: dropped</li>
             <li><span class="sw sw-bucket"></span>Bucket searched</li>
+            <li><span class="sw sw-ptr"></span>Index → row pointer</li>
             <li><span class="sw sw-result"></span>Joined row</li>
           </ul>
         </section>
@@ -191,12 +202,14 @@
             <li>A <b>join</b> pairs the rows of two tables that satisfy a condition — here <code>s.dept = d.id</code>. An <b>inner join</b> outputs only the pairs that match, so a student whose department doesn't exist is left out.</li>
             <li>The database can compute the same result in different ways. The <b>query planner</b> picks the cheapest one from the table sizes, the indexes and the memory available.</li>
             <li><b>Nested loop</b>: for each row of the outer table, scan the whole inner table. Always n × m comparisons — but it works for any condition.</li>
+            <li><b>Index nested loop</b>: the same outer loop, but each row is looked up in an <b>index</b> on the inner table's join column (here the B+ tree of the primary key <code>departments.id</code>): root → one leaf → one row. About log m comparisons per row, so n × log m in all — and the index already exists, so nothing is built per query.</li>
             <li><b>Hash join</b>: <i>build</i> a hash table on the smaller table, then <i>probe</i> it: each row of the other table looks in just one bucket. Roughly n + m work, but only for <code>=</code>, and the hash table needs memory.</li>
             <li><b>Merge join</b>: sort both tables on the key, then move two pointers forward together. The merge itself is at most n + m comparisons; the sorting costs about n log n — nothing if the input is already sorted.</li>
           </ul>
           <table class="algos">
             <tr><th></th><th>Work</th><th>Condition</th><th>Needs</th></tr>
             <tr><td style="color:var(--orange)">Nested loop</td><td>n × m</td><td>any</td><td>nothing</td></tr>
+            <tr><td style="color:var(--accent)">Index nested loop</td><td>n × log m</td><td>= (and ranges)</td><td>an index on the inner table</td></tr>
             <tr><td style="color:var(--violet)">Hash join</td><td>≈ n + m</td><td>=</td><td>RAM for the hash table</td></tr>
             <tr><td style="color:var(--teal)">Merge join</td><td>sort + (n + m)</td><td>= (and ranges)</td><td>sorted input</td></tr>
           </table>
@@ -204,6 +217,7 @@
           <ul>
             <li>Everything is in RAM and the scoreboard counts operations. Real databases mostly count <b>disk page reads</b> — e.g. a block nested loop reads the inner table once per block of outer rows.</li>
             <li><code>departments.id</code> is unique, so the merge join never moves backwards. With duplicates on both sides it outputs every pair of the two matching groups.</li>
+            <li>The index here is a two-level B+ tree with 3 keys per leaf; real ones hold hundreds of keys per page, so even huge tables need only 3–4 levels. The scoreboard counts one "index lookup" per student plus the key comparisons on the way down.</li>
             <li>Real hash tables have thousands of buckets. When the hash table doesn't fit in RAM, a <b>Grace hash join</b> first splits both tables into partitions on disk.</li>
           </ul>
         </section>
@@ -211,10 +225,10 @@
           <h3>Try this</h3>
           <ul>
             <li>Press <b>Tour</b> for a guided introduction.</li>
-            <li>Press <b>Compare all</b>: watch the <b>pairs</b> matrix — full for the nested loop, sparse for the hash join, a staircase for the merge join.</li>
+            <li>Press <b>Compare all</b>: watch the <b>pairs</b> matrix — full for the nested loop, two or three cells per student for the index lookups, sparse for the hash join, a staircase for the merge join.</li>
             <li>Set <b>Hash buckets</b> to 2, then to 8: more buckets, fewer comparisons per probe.</li>
             <li>Pick <b>12 × 6</b> tables and run the nested loop.</li>
-            <li>Drag the <b>Bigger tables</b> sliders to a million rows.</li>
+            <li>Drag the <b>Bigger tables</b> sliders to a million rows — then set students to 100 and departments to 10 million: now the index nested loop wins.</li>
           </ul>
           <h3>Keyboard</h3>
           <table class="keys">
@@ -222,7 +236,7 @@
             <tr><td><span class="kbd">→</span> <span class="kbd">←</span></td><td>Next / previous step</td></tr>
             <tr><td><span class="kbd">Home</span> <span class="kbd">End</span></td><td>Start of run / skip to end</td></tr>
             <tr><td><span class="kbd">R</span> or <span class="kbd">Enter</span></td><td>Run the join</td></tr>
-            <tr><td><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span></td><td>Nested loop / hash / merge</td></tr>
+            <tr><td><span class="kbd">1</span> – <span class="kbd">4</span></td><td>Nested loop / index nested loop / hash / merge</td></tr>
             <tr><td><span class="kbd">C</span></td><td>Compare all</td></tr>
             <tr><td><span class="kbd">D</span></td><td>New random tables</td></tr>
             <tr><td><span class="kbd">T</span></td><td>Tour</td></tr>

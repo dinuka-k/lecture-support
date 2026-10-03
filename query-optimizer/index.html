@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Query Optimizer</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="optimizer.css">
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5.5v13l10-6.5z" fill="currentColor" stroke="none"/><path d="M18.5 5.5v13"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5.5v13L9 12z" fill="currentColor" stroke="none"/><path d="M5.5 5.5v13"/></symbol>
+    <symbol id="i-end" viewBox="0 0 24 24"><path d="M3 6.5v11l7-5.5zM10.5 6.5v11l7-5.5z" fill="currentColor" stroke="none"/><path d="M20.5 5.5v13"/></symbol>
+    <symbol id="i-start" viewBox="0 0 24 24"><path d="M21 6.5v11L14 12zM13.5 6.5v11L6.5 12z" fill="currentColor" stroke="none"/><path d="M3.5 5.5v13"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="home" href="../index.html" title="All demos"><svg class="icon"><use href="#i-back"/></svg>Demos</a>
+      <h1 class="title">Query Optimizer</h1>
+
+      <div class="group">
+        <label class="sr-only" for="exampleSelect">Example query</label>
+        <select id="exampleSelect" class="input example-select" title="Load an example query (X)"></select>
+      </div>
+
+      <nav class="pipeline" id="pipeline" aria-label="Optimizer stages">
+        <button data-phase="parse" title="Jump to the parser (1)"><span class="num">1</span><span class="ph-name">Parser<small>SQL → tree</small></span></button>
+        <span class="ph-arrow" aria-hidden="true"></span>
+        <button data-phase="rewrite" title="Jump to the rewriter (2)"><span class="num">2</span><span class="ph-name">Rewriter<small>RBO · rules</small></span></button>
+        <span class="ph-arrow" aria-hidden="true"></span>
+        <button data-phase="plan" title="Jump to the planner (3)"><span class="num">3</span><span class="ph-name">Planner<small>CBO · costs</small></span></button>
+        <span class="ph-arrow" aria-hidden="true"></span>
+        <button data-phase="done" title="Jump to the final plan (4)"><span class="num">4</span><span class="ph-name">Execution plan<small>to the executor</small></span></button>
+      </nav>
+
+      <div class="tools">
+        <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help & shortcuts (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
+        <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn" title="Light / dark" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+        <button id="btnFullscreen" class="btn btn-icon btn-ghost" title="Fullscreen" aria-label="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button>
+        <button id="btnSidebar" class="btn btn-icon btn-ghost" title="Show / hide side panel" aria-label="Toggle side panel"><svg class="icon"><use href="#i-sidebar"/></svg></button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="stage">
+        <div class="querybar">
+          <div class="editor" id="editor">
+            <pre class="hl" id="hl" aria-hidden="true"></pre>
+            <textarea id="sql" class="sql-input" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="soft" aria-label="SQL query"></textarea>
+          </div>
+          <div class="query-actions">
+            <button id="btnOptimize" class="btn btn-primary btn-optimize" title="Optimize this query (Ctrl+Enter)"><svg class="icon"><use href="#i-bolt"/></svg>Optimize</button>
+            <span class="edit-hint" id="editHint"><span class="kbd">Ctrl</span>+<span class="kbd">Enter</span></span>
+            <button id="btnCompact" class="btn btn-ghost btn-compact" title="Show the whole query, or just its first line (Q)"><svg class="icon"><use href="#i-chev"/></svg><span>Less</span></button>
+          </div>
+        </div>
+
+
+        <div class="work">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="canvas" aria-label="The query tree as the optimizer transforms it"></canvas>
+            <div class="caption" id="caption" data-status="info" aria-live="polite">
+              <span class="caption-step" id="captionStep"></span>
+              <p class="caption-text" id="captionText"></p>
+            </div>
+            <div class="toast" id="toast" role="status"></div>
+          </div>
+          <aside class="board" id="board" aria-live="polite"></aside>
+        </div>
+
+        <footer class="player">
+          <div class="transport">
+            <button id="btnStart" class="btn btn-icon" title="First step (Home)" aria-label="First step"><svg class="icon"><use href="#i-start"/></svg></button>
+            <button id="btnBack" class="btn btn-icon" title="Previous step (←)" aria-label="Previous step"><svg class="icon"><use href="#i-prev"/></svg></button>
+            <button id="btnPlay" class="btn btn-icon btn-primary play" title="Play / pause (Space)" aria-label="Play"><svg class="icon"><use href="#i-play"/></svg></button>
+            <button id="btnNext" class="btn btn-icon" title="Next step (→)" aria-label="Next step"><svg class="icon"><use href="#i-next"/></svg></button>
+            <button id="btnEnd" class="btn btn-icon" title="Last step (End)" aria-label="Last step"><svg class="icon"><use href="#i-end"/></svg></button>
+          </div>
+          <div class="progress">
+            <div class="progress-label"><strong id="opLabel">Ready</strong><span id="stepLabel"></span></div>
+            <div class="progress-bar"><div id="progressFill"></div></div>
+          </div>
+          <label class="speed">Speed
+            <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1">
+            <output id="speedOut">1×</output>
+          </label>
+          <label class="switch" title="Play steps automatically; turn off to advance step by step">
+            <input id="autoplay" type="checkbox" checked><span class="track"></span>Auto-play
+          </label>
+        </footer>
+      </section>
+
+      <aside class="sidebar" id="sidebar">
+        <section class="panel">
+          <h2>Steps <span id="stepsTitle"></span></h2>
+          <ol class="step-log" id="stepLog"></ol>
+        </section>
+
+        <section class="panel">
+          <h2>Pseudocode</h2>
+          <div class="pseudo" id="pseudo"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Statistics &amp; indexes</h2>
+          <p class="note">Change a table’s size or click a column to add / drop its index. The query is re-planned at once — the rewrite stays the same, because rules never use statistics.</p>
+          <div class="catalog" id="catalog"></div>
+          <div class="setting">
+            <div class="setting-label">Storage<small>Cost of one random page read</small></div>
+            <div class="seg" id="segStorage">
+              <button data-v="hdd">Hard disk · 4.0</button><button data-v="ssd">SSD · 1.1</button>
+            </div>
+          </div>
+          <div class="setting">
+            <button id="btnResetStats" class="btn"><svg class="icon"><use href="#i-reset"/></svg>Reset statistics</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Legend</h2>
+          <ul class="legend">
+            <li><span class="sym t-scan">▦</span>Table</li>
+            <li><span class="sym t-select">σ</span>Selection (filter)</li>
+            <li><span class="sym t-project">π</span>Projection</li>
+            <li><span class="sym t-product">×</span>Cross product</li>
+            <li><span class="sym t-join">⋈</span>Join</li>
+            <li><span class="sym t-join">⋉</span>Semi join</li>
+            <li><span class="sym t-agg">γ</span>Group / aggregate</li>
+            <li><span class="sym t-sort">↓</span>Sort · <b>#</b> Limit</li>
+            <li><span class="sw sw-derived"></span>Derived condition</li>
+            <li><span class="sw sw-focus"></span>Being changed</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal" id="help" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="btn btn-icon btn-ghost modal-close" id="btnHelpClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      <h2 id="helpTitle">How a query optimizer decides</h2>
+      <div class="help-grid">
+        <section>
+          <h3>The pipeline</h3>
+          <ul>
+            <li><b>Parser</b>: checks the grammar, splits the SQL into clauses and binds every name to the catalog. The result is the <b>canonical tree</b> π(σ(R₁ × R₂ × …)) — correct but very slow.</li>
+            <li><b>Rewriter (rule-based, RBO)</b>: applies equivalence rules in a fixed order — unnest subqueries, fold constants, remove redundant or impossible conditions, split AND, push selections down, turn × + condition into ⋈, infer transitive conditions, prune columns. Rules don’t look at data sizes.</li>
+            <li><b>Planner (cost-based, CBO)</b>: uses <b>statistics</b> (rows, pages, distinct values, min/max, indexes) to estimate how many rows each step produces and what it costs. It chooses an <b>access path</b> per table (Seq Scan or Index Scan), the <b>join order</b> (dynamic programming over sets of tables) and a <b>join method</b> (nested loop, index nested loop, hash, merge).</li>
+          </ul>
+          <h3>Simplifications</h3>
+          <ul>
+            <li>The cost formulas are a simplified version of PostgreSQL’s (sequential page 1.0, random page 4.0, per row 0.01, per comparison 0.0025). Real systems also count memory, caching and “interesting orders”.</li>
+            <li>Selectivity uses uniform distributions and assumes filters are independent; there are no histograms.</li>
+            <li>Joins are inner joins; outer joins, HAVING, NULLs and correlated subqueries are not covered.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Try this</h3>
+          <ul>
+            <li>Edit the query: add a filter, remove a join condition, misspell a column.</li>
+            <li>Example “Index ignored”: change <code>year = 2</code> to <code>id = 7</code> — the plan switches to an Index Scan.</li>
+            <li>In <b>Statistics &amp; indexes</b>, drop the index on <code>enrollments.student_id</code>, or make <code>students</code> tiny, and watch the join order change.</li>
+            <li>Switch storage to SSD: random reads get cheaper, so indexes win more often.</li>
+          </ul>
+          <h3>Keyboard</h3>
+          <table class="keys">
+            <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">Enter</span></td><td>Optimize the query</td></tr>
+            <tr><td><span class="kbd">Space</span></td><td>Play / pause</td></tr>
+            <tr><td><span class="kbd">→</span> <span class="kbd">←</span></td><td>Next / previous step</td></tr>
+            <tr><td><span class="kbd">Home</span> <span class="kbd">End</span></td><td>First / last step</td></tr>
+            <tr><td><span class="kbd">1</span>–<span class="kbd">4</span></td><td>Jump to a stage</td></tr>
+            <tr><td><span class="kbd">E</span></td><td>Edit the query</td></tr>
+            <tr><td><span class="kbd">Q</span></td><td>Show the whole query / one line</td></tr>
+            <tr><td><span class="kbd">X</span></td><td>Next example</td></tr>
+            <tr><td><span class="kbd">?</span></td><td>This help</td></tr>
+          </table>
+        </section>
+      </div>
+      <p class="credit">Created by <b data-author></b></p>
+    </div>
+  </div>
+
+  <script src="../shared/shell.js"></script>
+  <script src="qo-sql.js"></script>
+  <script src="qo-engine.js"></script>
+  <script src="qo-view.js"></script>
+  <script src="qo-board.js"></script>
+  <script src="qo-app.js"></script>
+</body>
+</html>

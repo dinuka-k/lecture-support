@@ -109,6 +109,60 @@
         </div>
       </a>
 
+      <a class="card" href="query-optimizer/index.html">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 260 120">
+            <rect class="art-node" x="12" y="48" width="74" height="24" rx="5"/>
+            <text class="art-text" x="49" y="60">SELECT …</text>
+            <path class="art-edge" d="M90 60 H108"/>
+            <path class="art-edge" d="M103 55 L109 60 L103 65"/>
+            <path class="art-edge" d="M180 34 V48"/>
+            <path class="art-edge" d="M172 72 C172 84 146 82 146 92"/>
+            <path class="art-edge" d="M188 72 C188 84 214 82 214 92"/>
+            <rect class="art-node" x="138" y="12" width="84" height="22" rx="5"/>
+            <text class="art-text" x="180" y="23">π output</text>
+            <rect class="art-hl" x="138" y="48" width="84" height="24" rx="5"/>
+            <text class="art-text on" x="180" y="60">⋈ Hash Join</text>
+            <rect class="art-node" x="116" y="92" width="60" height="22" rx="5"/>
+            <text class="art-text" x="146" y="103">Seq Scan</text>
+            <rect class="art-node" x="184" y="92" width="60" height="22" rx="5"/>
+            <text class="art-text" x="214" y="103">Index</text>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h2>Query Optimizer</h2>
+          <p>Type any SQL query and watch it become a plan: the parser builds the query tree, the rewriter (RBO) applies rules like predicate pushdown, and the planner (CBO) uses statistics and costs to pick access paths, join order and join methods.</p>
+          <div class="tags"><span>Databases</span><span>Query processing</span><span>RBO &amp; CBO</span></div>
+        </div>
+      </a>
+
+      <a class="card" href="hashing/index.html">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 260 120">
+            <rect class="art-hl" x="14" y="44" width="32" height="26" rx="5"/>
+            <text class="art-text on" x="30" y="57">42</text>
+            <path class="art-edge" d="M48 57 L70 57"/>
+            <rect class="art-node" x="72" y="40" width="62" height="34" rx="6"/>
+            <text class="art-text" x="103" y="57">h(k)</text>
+            <path class="art-edge" d="M136 57 C160 57 160 97 180 97"/>
+            <path class="art-edge" d="M174 92 L181 97 L174 102"/>
+            <rect class="art-node" x="184" y="12" width="62" height="21" rx="4"/>
+            <rect class="art-node" x="184" y="37" width="62" height="21" rx="4"/>
+            <rect class="art-node" x="184" y="62" width="62" height="21" rx="4"/>
+            <rect class="art-node" x="184" y="87" width="62" height="21" rx="4"/>
+            <rect class="art-key" x="188" y="14.5" width="24" height="16" rx="3"/>
+            <rect class="art-key" x="188" y="39.5" width="24" height="16" rx="3"/>
+            <rect class="art-key" x="216" y="39.5" width="24" height="16" rx="3"/>
+            <rect class="art-hl" x="188" y="89.5" width="24" height="16" rx="3"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h2>Hashing</h2>
+          <p>Four modes: a hash table with chaining or open addressing (linear, quadratic, double hashing, rehashing), a static hash index on disk with overflow pages and range queries, extendible hashing with directory doubling, and linear hashing with round-robin splits.</p>
+          <div class="tags"><span>Data structures</span><span>Databases</span><span>Hashing</span></div>
+        </div>
+      </a>
+
       <a class="card" href="joins/index.html">
         <div class="card-art" aria-hidden="true">
           <svg viewBox="0 0 260 120">

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorting Algorithms</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="sorting.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5.5v13l10-6.5z" fill="currentColor" stroke="none"/><path d="M18.5 5.5v13"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5.5v13L9 12z" fill="currentColor" stroke="none"/><path d="M5.5 5.5v13"/></symbol>
+    <symbol id="i-end" viewBox="0 0 24 24"><path d="M3 6.5v11l7-5.5zM10.5 6.5v11l7-5.5z" fill="currentColor" stroke="none"/><path d="M20.5 5.5v13"/></symbol>
+    <symbol id="i-start" viewBox="0 0 24 24"><path d="M21 6.5v11L14 12zM13.5 6.5v11L6.5 12z" fill="currentColor" stroke="none"/><path d="M3.5 5.5v13"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="home" href="../index.html" title="All demos"><svg class="icon"><use href="#i-back"/></svg>Demos</a>
+      <h1 class="title">Sorting</h1>
+
+      <div class="seg seg-algo" id="segAlgo" role="tablist" aria-label="Algorithm">
+        <button data-v="bubble">Bubble</button>
+        <button data-v="selection">Selection</button>
+        <button data-v="insertion">Insertion</button>
+        <button data-v="merge">Merge</button>
+        <button data-v="quick">Quick</button>
+        <button data-v="heap">Heap</button>
+      </div>
+
+      <button id="btnSort" class="btn btn-primary" title="Sort the array (Enter / S)"><svg class="icon"><use href="#i-play"/></svg>Sort</button>
+
+      <div class="group">
+        <select id="dataSelect" class="input" aria-label="Kind of data" title="Kind of starting data">
+          <option value="random">Random</option>
+          <option value="nearly">Nearly sorted</option>
+          <option value="reversed">Reversed</option>
+          <option value="few">Few unique</option>
+        </select>
+        <label class="size">n <input id="sizeInput" class="input count" type="number" min="4" max="32" value="10" aria-label="Number of values"></label>
+        <button id="btnNew" class="btn" title="New array (N)"><svg class="icon"><use href="#i-dice"/></svg>New array</button>
+        <input id="customInput" class="input custom" placeholder="or type values: 5, 3, 8, 1" autocomplete="off" spellcheck="false" aria-label="Custom values">
+      </div>
+
+      <div class="tools">
+        <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help & shortcuts (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
+        <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn" title="Light / dark" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+        <button id="btnFullscreen" class="btn btn-icon btn-ghost" title="Fullscreen" aria-label="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button>
+        <button id="btnSidebar" class="btn btn-icon btn-ghost" title="Show / hide side panel" aria-label="Toggle side panel"><svg class="icon"><use href="#i-sidebar"/></svg></button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="stage">
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="canvas" aria-label="Array being sorted"></canvas>
+          <div class="caption" id="caption" data-status="info" aria-live="polite">
+            <p class="caption-text" id="captionText"></p>
+            <div class="rules" id="rules"></div>
+          </div>
+          <div class="toast" id="toast" role="status"></div>
+        </div>
+
+        <footer class="player">
+          <div class="transport">
+            <button id="btnStart" class="btn btn-icon" title="Back to the start (Home)" aria-label="Start"><svg class="icon"><use href="#i-start"/></svg></button>
+            <button id="btnBack" class="btn btn-icon" title="Previous step (←)" aria-label="Previous step"><svg class="icon"><use href="#i-prev"/></svg></button>
+            <button id="btnPlay" class="btn btn-icon btn-primary play" title="Play / pause (Space)" aria-label="Play"><svg class="icon"><use href="#i-play"/></svg></button>
+            <button id="btnNext" class="btn btn-icon" title="Next step (→)" aria-label="Next step"><svg class="icon"><use href="#i-next"/></svg></button>
+            <button id="btnEnd" class="btn btn-icon" title="Skip to the end (End)" aria-label="Skip to end"><svg class="icon"><use href="#i-end"/></svg></button>
+          </div>
+          <div class="progress">
+            <div class="progress-label"><strong id="opLabel">Ready</strong><span id="stepLabel"></span></div>
+            <div class="progress-bar"><div id="progressFill"></div></div>
+          </div>
+          <label class="speed">Speed
+            <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1">
+            <output id="speedOut">1×</output>
+          </label>
+          <label class="switch" title="Play automatically; turn off to advance step by step">
+            <input id="autoplay" type="checkbox" checked><span class="track"></span>Auto-play
+          </label>
+        </footer>
+      </section>
+
+      <aside class="sidebar" id="sidebar">
+        <section class="panel">
+          <h2>Steps</h2>
+          <ol class="step-log" id="stepLog"></ol>
+        </section>
+        <section class="panel">
+          <h2>Pseudocode</h2>
+          <div class="pseudo" id="pseudo"></div>
+        </section>
+        <section class="panel">
+          <h2>Complexity</h2>
+          <div class="cx-wrap"><table class="cx" id="cx">
+            <thead><tr><th></th><th>Best</th><th>Avg</th><th>Worst</th><th>Space</th><th>Stable</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </section>
+        <section class="panel">
+          <h2>Legend</h2>
+          <ul class="legend">
+            <li><span class="sw sw-compare"></span>Being compared</li>
+            <li><span class="sw sw-swap"></span>Swapped / moved</li>
+            <li><span class="sw sw-key"></span>Key / current min</li>
+            <li><span class="sw sw-pivot"></span>Pivot / heap root</li>
+            <li><span class="sw sw-placed"></span>Placed (temp / key)</li>
+            <li><span class="sw sw-done"></span>In final place</li>
+            <li><span class="sw sw-range"></span>Part being worked on</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal" id="help" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="btn btn-icon btn-ghost modal-close" id="btnHelpClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      <h2 id="helpTitle">Using the sorting demo</h2>
+      <div class="help-grid">
+        <section>
+          <h3>How to use it</h3>
+          <ul>
+            <li>Pick an algorithm, then press <b>Sort</b>. Every comparison and swap is a step with an explanation.</li>
+            <li><b>New array</b> makes fresh data: random, nearly sorted, reversed or with few unique values. Or type your own values (1–99).</li>
+            <li>Switching algorithm keeps the same unsorted array, so you can compare them on identical data — watch the comparison and swap counters.</li>
+            <li>Merge sort shows its temporary array below; heap sort also draws the array as a binary tree.</li>
+          </ul>
+          <h3>Try this</h3>
+          <ul>
+            <li>Insertion and bubble sort on <b>nearly sorted</b> data: almost linear.</li>
+            <li>Quick sort on <b>reversed</b> data: the last-item pivot gives its O(n²) worst case.</li>
+            <li><b>Few unique</b> values show stability: equal values keep their order in merge and insertion sort.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Keyboard</h3>
+          <table class="keys">
+            <tr><td><span class="kbd">Space</span></td><td>Play / pause</td></tr>
+            <tr><td><span class="kbd">→</span> <span class="kbd">←</span></td><td>Next / previous step</td></tr>
+            <tr><td><span class="kbd">Home</span> <span class="kbd">End</span></td><td>Start / end</td></tr>
+            <tr><td><span class="kbd">S</span> or <span class="kbd">Enter</span></td><td>Sort</td></tr>
+            <tr><td><span class="kbd">N</span></td><td>New array</td></tr>
+            <tr><td><span class="kbd">1</span>–<span class="kbd">6</span></td><td>Choose algorithm</td></tr>
+            <tr><td><span class="kbd">?</span></td><td>This help</td></tr>
+          </table>
+        </section>
+      </div>
+      <p class="credit">Created by <b data-author></b></p>
+    </div>
+  </div>
+
+  <script src="../shared/shell.js"></script>
+  <script src="sort-algo.js"></script>
+  <script src="sort-view.js"></script>
+  <script src="sort-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecture Demos</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="shared/theme.css">
+  <style>
+    body { min-height: 100vh; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 48px 24px 64px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+    h1 { margin: 0; font-size: 32px; font-weight: 750; letter-spacing: -0.02em; }
+    header p { margin: 6px 0 0; color: var(--ink-2); font-size: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .card {
+      display: flex; flex-direction: column;
+      border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+      box-shadow: var(--shadow-sm); color: inherit; text-decoration: none; overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--line-strong); }
+    .card-art { height: 150px; display: grid; place-items: center; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+    .card-art svg { width: 82%; height: auto; }
+    .card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .card h2 { margin: 0; font-size: 18px; }
+    .card p { margin: 0; color: var(--ink-2); font-size: 14px; flex: 1; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tags span { padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 650; }
+    /* Card illustration colours follow the theme. */
+    .art-node { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.5; }
+    .art-key { fill: var(--key-bg); }
+    .art-hl { fill: var(--accent); }
+    .art-edge { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+    .art-text { fill: var(--ink); font: 700 11px var(--font); text-anchor: middle; dominant-baseline: central; }
+    .art-text.on { fill: var(--on-strong); }
+    header p b { color: var(--ink); font-weight: 650; }
+    .credit { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  </svg>
+
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Lecture Demos</h1>
+        <p>Interactive visualizations for class by <b data-author></b> — open one and step through it.</p>
+      </div>
+      <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn" title="Light / dark" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+    </header>
+
+    <main class="grid">
+      <a class="card" href="btree/index.html">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 260 120">
+            <path class="art-edge" d="M112 38 C112 58 50 58 50 76"/>
+            <path class="art-edge" d="M148 38 C148 58 210 58 210 76"/>
+            <path class="art-edge" d="M130 38 L130 76"/>
+            <rect class="art-node" x="94" y="10" width="72" height="28" rx="6"/>
+            <rect class="art-key" x="98" y="14" width="30" height="20" rx="4"/><text class="art-text" x="113" y="24">20</text>
+            <rect class="art-hl" x="132" y="14" width="30" height="20" rx="4"/><text class="art-text on" x="147" y="24">40</text>
+            <rect class="art-node" x="16" y="76" width="72" height="28" rx="6"/>
+            <rect class="art-key" x="20" y="80" width="30" height="20" rx="4"/><text class="art-text" x="35" y="90">5</text>
+            <rect class="art-key" x="54" y="80" width="30" height="20" rx="4"/><text class="art-text" x="69" y="90">12</text>
+            <rect class="art-node" x="111" y="76" width="38" height="28" rx="6"/>
+            <rect class="art-key" x="115" y="80" width="30" height="20" rx="4"/><text class="art-text" x="130" y="90">30</text>
+            <rect class="art-node" x="174" y="76" width="72" height="28" rx="6"/>
+            <rect class="art-key" x="178" y="80" width="30" height="20" rx="4"/><text class="art-text" x="193" y="90">50</text>
+            <rect class="art-key" x="212" y="80" width="30" height="20" rx="4"/><text class="art-text" x="227" y="90">60</text>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h2>B-Tree</h2>
+          <p>Insertion with node splits, deletion with borrowing and merging, and search — animated step by step with pseudocode. Drag keys in and out of the tree.</p>
+          <div class="tags"><span>Data structures</span><span>Trees</span><span>Indexing</span></div>
+        </div>
+      </a>
+
+      <a class="card" href="indexing/index.html">
+        <div class="card-art" aria-hidden="true">
+          <svg viewBox="0 0 260 120">
+            <text class="art-text" x="66" y="25">RAM</text>
+            <rect class="art-node" x="90" y="8" width="100" height="34" rx="6"/>
+            <rect class="art-key" x="96" y="14" width="26" height="22" rx="3"/>
+            <rect class="art-hl" x="127" y="14" width="26" height="22" rx="3"/>
+            <rect class="art-key" x="158" y="14" width="26" height="22" rx="3"/>
+            <path class="art-edge" d="M173 71 C173 56 140 60 140 45"/>
+            <path class="art-edge" d="M135 50 L140 44 L145 50"/>
+            <text class="art-text" x="24" y="87">Disk</text>
+            <rect class="art-node" x="46" y="62" width="200" height="50" rx="6"/>
+            <rect class="art-key" x="54" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-key" x="81" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-key" x="108" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-key" x="135" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-hl" x="162" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-key" x="189" y="71" width="22" height="32" rx="3"/>
+            <rect class="art-key" x="216" y="71" width="22" height="32" rx="3"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <h2>Database Indexing</h2>
+          <p>Why queries are slow: table pages must travel from disk into RAM. Race a full table scan against an index lookup and watch disk reads, RAM checks and time on a live scoreboard.</p>
+          <div class="tags"><span>Databases</span><span>Indexing</span><span>Disk &amp; RAM</span></div>
+        </div>
+      </a>
+    </main>
+
+    <footer class="credit">© <span id="year"></span> <span data-author></span></footer>
+  </div>
+
+  <script src="shared/shell.js"></script>
+  <script>
+    DemoShell.initThemeToggle(document.getElementById('btnTheme'));
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

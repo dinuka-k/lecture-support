@@ -47,5 +47,21 @@
   // Any element marked data-author gets the author's name.
   document.querySelectorAll('[data-author]').forEach((n) => { n.textContent = AUTHOR; });
 
+  // Watermark: a small, semi-transparent signature in the bottom-right corner
+  // of the drawing area (the element marked data-watermark-host, else the
+  // canvas's container, else the page). It ignores the mouse so it never
+  // blocks a control. Pages can opt out with <body data-no-watermark>.
+  if (!document.body.hasAttribute('data-no-watermark')) {
+    const canvas = document.querySelector('canvas');
+    const host = document.querySelector('[data-watermark-host]') || (canvas && canvas.parentElement);
+    const mark = document.createElement('div');
+    mark.className = 'author-watermark' + (host ? '' : ' fixed');
+    mark.setAttribute('aria-hidden', 'true');
+    mark.innerHTML = '<span class="aw-dot"></span><span class="aw-by">by</span> <span class="aw-name"></span>';
+    mark.querySelector('.aw-name').textContent = AUTHOR;
+    if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    (host || document.body).appendChild(mark);
+  }
+
   global.DemoShell = { AUTHOR, THEME_KEY, effectiveTheme, setTheme, initThemeToggle, initFullscreen };
 })(window);

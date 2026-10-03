@@ -66,7 +66,7 @@
       el.input.classList.add('flash');
     },
     onAutoFit: (on) => el.fit.classList.toggle('on', on),
-  }, { watermark: DemoShell.AUTHOR });
+  });
 
   // All recorded steps, across operations. `cur` is the step on screen (or being animated to).
   const T = { steps: [], ops: [], cur: 0, anim: null, playing: false, holdUntil: 0 };

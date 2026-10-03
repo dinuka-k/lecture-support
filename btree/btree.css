@@ -74,6 +74,7 @@ body.no-sidebar .sidebar { display: none; }
 }
 
 .canvas-wrap {
+  --watermark-bottom: 136px; /* sit above the key tray and drop zones */
   position: relative;
   overflow: hidden;
   background: var(--bg);

@@ -41,6 +41,11 @@
         <button data-v="heap">Heap</button>
       </div>
 
+      <div class="seg seg-merge" id="segMerge" role="group" aria-label="How to show merge sort" hidden>
+        <button data-v="trust" title="Split, trust the two recursive calls, then show the merge in detail">Trust the recursion</button>
+        <button data-v="full" title="Trace every recursive call down to single elements">Full trace</button>
+      </div>
+
       <button id="btnSort" class="btn btn-primary" title="Sort the array (Enter / S)"><svg class="icon"><use href="#i-play"/></svg>Sort</button>
 
       <div class="group">
@@ -139,7 +144,8 @@
             <li>Pick an algorithm, then press <b>Sort</b>. Every comparison and swap is a step with an explanation.</li>
             <li><b>New array</b> makes fresh data: random, nearly sorted, reversed or with few unique values. Or type your own values (1–99).</li>
             <li>Switching algorithm keeps the same unsorted array, so you can compare them on identical data — watch the comparison and swap counters.</li>
-            <li>Merge sort shows its temporary array below; heap sort also draws the array as a binary tree.</li>
+            <li>Merge sort has two views. <b>Trust the recursion</b> (default) splits the array, treats the two recursive calls as black boxes that return sorted halves, and shows the merge in detail. <b>Full trace</b> follows every call down to single elements.</li>
+            <li>Heap sort also draws the array as a binary tree.</li>
           </ul>
           <h3>Try this</h3>
           <ul>

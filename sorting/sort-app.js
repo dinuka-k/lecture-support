@@ -10,7 +10,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const PREFS_KEY = 'lecture-demos.sorting';
-  const prefs = { algo: 'bubble', data: 'random', n: 10, speed: 1, autoplay: true, sidebar: true };
+  const prefs = { mergeMode: 'trust', algo: 'bubble', data: 'random', n: 10, speed: 1, autoplay: true, sidebar: true };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); } catch (e) { /* storage unavailable */ }
   const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
@@ -70,7 +70,7 @@
       refreshPlayer();
       return;
     }
-    T.steps = S.record(prefs.algo, items);
+    T.steps = S.record(prefs.algo, items, { trust: prefs.mergeMode === 'trust' });
     T.cur = 0;
     T.sorted = true;
     if (prefs.autoplay) T.playing = true;
@@ -122,7 +122,7 @@
   const stepBy = (d) => {
     T.playing = false;
     if (!T.sorted && d > 0) {
-      T.steps = S.record(prefs.algo, items);
+      T.steps = S.record(prefs.algo, items, { trust: prefs.mergeMode === 'trust' });
       T.sorted = true;
     }
     go(T.cur + d);
@@ -221,6 +221,7 @@
     prefs.algo = algo;
     savePrefs();
     document.querySelectorAll('#segAlgo button').forEach((b) => b.classList.toggle('on', b.dataset.v === algo));
+    syncMerge();
     reset(`${S.ALGOS[algo].name}: ${S.ALGOS[algo].idea} Same starting array as before — press Sort.`);
   }
 
@@ -244,7 +245,22 @@
     setItems(vals);
   }
 
+  function syncMerge() {
+    $('segMerge').hidden = prefs.algo !== 'merge';
+    document.querySelectorAll('#segMerge button').forEach((b) => b.classList.toggle('on', b.dataset.v === prefs.mergeMode));
+  }
+
   // ---------- Wiring ----------
+
+  document.querySelectorAll('#segMerge button').forEach((b) => b.addEventListener('click', () => {
+    if (prefs.mergeMode === b.dataset.v) return;
+    prefs.mergeMode = b.dataset.v;
+    savePrefs();
+    syncMerge();
+    reset(prefs.mergeMode === 'trust'
+      ? 'Trust the recursion: split the array, assume the two recursive calls return sorted halves, and watch the merge step in detail. Press Sort.'
+      : 'Full trace: follow every recursive call down to single elements, then every merge on the way back up. Press Sort.');
+  }));
 
   document.querySelectorAll('#segAlgo button').forEach((b) => b.addEventListener('click', () => setAlgo(b.dataset.v)));
   $('btnSort').addEventListener('click', sort);
@@ -322,6 +338,7 @@
   // ---------- Start ----------
 
   applySidebar();
+  syncMerge();
   document.querySelectorAll('#segAlgo button').forEach((b) => b.classList.toggle('on', b.dataset.v === prefs.algo));
   setItems(makeData(prefs.data, prefs.n));
   requestAnimationFrame(loop);

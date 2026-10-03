@@ -101,6 +101,8 @@
       this.algo = algo;
       this.steps = [];
       this.heap = null;
+      this.split = null; // gap drawn after this index (merge sort, trust mode)
+      this.calls = null; // recursive calls shown as boxes: { lo, hi, state }
     }
 
     step(msg, o = {}) {
@@ -109,6 +111,7 @@
         main: this.a.slice(), aux: this.aux ? this.aux.slice() : null,
         done: [...this.done], hl: o.hl || {}, range: o.range || null, marks: o.marks || [],
         heap: this.heap, stats: Object.assign({}, this.stats),
+        split: this.split, calls: this.calls ? this.calls.map((c) => Object.assign({}, c)) : null,
       });
     }
 
@@ -322,22 +325,86 @@
     rec.step('Sorted!', { status: 'success' });
   }
 
+
+  // Merge sort the way it is meant to be thought about: split, trust the two
+  // recursive calls to return sorted halves (no tracing inside), then merge.
+  function mergeTrust(rec) {
+    const a = rec.a, n = a.length, mid = (n - 1) >> 1;
+    const vals = (lo, hi) => a.slice(lo, hi + 1).map(v).join(', ');
+    rec.step(`mergeSort(0, ${n - 1}) on the whole array. Don't ask how the halves get sorted — ask: if both halves were already sorted, how would we combine them?`, { line: 0, range: [0, n - 1] });
+    rec.split = mid;
+    rec.calls = [{ lo: 0, hi: mid, state: 'pending' }, { lo: mid + 1, hi: n - 1, state: 'pending' }];
+    rec.step(`Split at mid = ${mid}: the left half is positions 0–${mid}, the right half ${mid + 1}–${n - 1}.`, { line: 2 });
+    [0, 1].forEach((side) => {
+      const c = rec.calls[side];
+      const hl = {};
+      for (let i = c.lo; i <= c.hi; i++) hl[a[i].id] = 'compare';
+      c.state = 'running';
+      rec.step(`mergeSort(${c.lo}, ${c.hi}) is a recursive call. Trust it: it returns the ${side ? 'right' : 'left'} half sorted. We don't trace what happens inside — it is the same algorithm on a smaller array, and a single element is already sorted.`, { line: 3, hl });
+      const part = a.slice(c.lo, c.hi + 1).sort((x, y) => v(x) - v(y));
+      part.forEach((it, k) => { a[c.lo + k] = it; });
+      c.state = 'sorted';
+      rec.step(`…and it comes back sorted: ${vals(c.lo, c.hi)}.`, { line: 3 });
+    });
+    rec.calls = rec.calls.map((c) => Object.assign(c, { state: 'sorted' }));
+    rec.aux = Array(n).fill(null);
+    rec.step('Now the real work of merge sort: merge the two sorted halves. Only the front item of each half can be the smallest, so compare those two.', { line: 4, range: [0, n - 1] });
+    let i = 0, j = mid + 1, k = 0;
+    while (i <= mid || j <= n - 1) {
+      let take;
+      if (i > mid) {
+        take = j++;
+        rec.stats.swp++;
+        rec.aux[k] = a[take]; a[take] = null;
+        rec.step(`The left half is used up — copy the rest of the right half: ${v(rec.aux[k])} → temp[${k}].`, { line: 5, hl: { [rec.aux[k].id]: 'placed' }, range: [0, n - 1] });
+        k++;
+        continue;
+      }
+      if (j > n - 1) {
+        take = i++;
+        rec.stats.swp++;
+        rec.aux[k] = a[take]; a[take] = null;
+        rec.step(`The right half is used up — copy the rest of the left half: ${v(rec.aux[k])} → temp[${k}].`, { line: 5, hl: { [rec.aux[k].id]: 'placed' }, range: [0, n - 1] });
+        k++;
+        continue;
+      }
+      rec.stats.cmp++;
+      const left = v(a[i]) <= v(a[j]);
+      rec.step(`Front items: ${v(a[i])} (left) and ${v(a[j])} (right). The smaller is ${left ? v(a[i]) : v(a[j])}${v(a[i]) === v(a[j]) ? ' — equal, take the left one so the sort stays stable' : ''}.`, {
+        line: 4, hl: { [a[i].id]: 'compare', [a[j].id]: 'compare' }, range: [0, n - 1], marks: [{ i, label: 'i' }, { i: j, label: 'j' }],
+      });
+      take = left ? i++ : j++;
+      const it = a[take];
+      rec.aux[k] = it; a[take] = null;
+      rec.stats.swp++;
+      rec.step(`Move ${v(it)} into temp[${k}] and advance in the ${left ? 'left' : 'right'} half.`, { line: 5, hl: { [it.id]: 'placed' }, range: [0, n - 1] });
+      k++;
+    }
+    for (let t = 0; t < n; t++) a[t] = rec.aux[t];
+    rec.aux = null;
+    rec.split = null;
+    rec.calls = null;
+    a.forEach((it) => rec.done.add(it.id));
+    rec.step('Copy temp back. Two sorted halves became one sorted array, with at most n − 1 comparisons. The same merge happens inside every recursive call — that is the whole algorithm.', { line: 6, status: 'success' });
+  }
+
   const RUN = { bubble, selection, insertion, merge, quick, heap };
 
-  function record(algo, items) {
+  function record(algo, items, opts = {}) {
     const rec = new Recorder(items, algo);
+    const trust = algo === 'merge' && opts.trust;
     rec.step(`${ALGOS[algo].name}: ${ALGOS[algo].idea}`, { line: 0 });
-    RUN[algo](rec);
+    (trust ? mergeTrust : RUN[algo])(rec);
     const last = rec.steps[rec.steps.length - 1];
     last.status = 'success';
-    last.msg = `Sorted! ${rec.stats.cmp} comparisons and ${rec.stats.swp} ${algo === 'merge' ? 'moves' : 'swaps'} for n = ${items.length}.`;
+    if (!trust) last.msg = `Sorted! ${rec.stats.cmp} comparisons and ${rec.stats.swp} ${algo === 'merge' ? 'moves' : 'swaps'} for n = ${items.length}.`;
     return rec.steps;
   }
 
   function idle(items, algo, msg) {
     return {
       algo, msg, status: 'info', line: -1, main: items.slice(), aux: null, done: [], hl: {}, range: null, marks: [],
-      heap: algo === 'heap' ? items.length : null, stats: { cmp: 0, swp: 0 },
+      heap: algo === 'heap' ? items.length : null, stats: { cmp: 0, swp: 0 }, split: null, calls: null,
     };
   }
 

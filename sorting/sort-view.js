@@ -9,6 +9,8 @@
   const GAP = 6;
   const MAX_H = 260;
   const AUX_GAP = 70;
+  const SPLIT_GAP = 44; // extra space between the halves in merge sort's trust mode
+  const CALLS_H = 56; // room above the bars for the recursive-call boxes
 
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -61,13 +63,17 @@
       const n = step.main.length;
       const bw = n <= 12 ? 56 : n <= 20 ? 42 : 30;
       const maxV = Math.max(...step.main.concat(step.aux || []).filter(Boolean).map((it) => it.v), 1);
-      const width = n * (bw + GAP) - GAP;
+      const split = step.split != null ? step.split : null;
+      const width = n * (bw + GAP) - GAP + (split != null ? SPLIT_GAP : 0);
+      const xi = (i) => i * (bw + GAP) + (split != null && i > split ? SPLIT_GAP : 0);
+      const xa = (i) => i * (bw + GAP) + (split != null ? SPLIT_GAP / 2 : 0); // temp row: one array, no gap
       const auxY = MAX_H + AUX_GAP;
       const heapY = MAX_H + 70;
       let height = MAX_H + 40;
       if (step.aux) height = auxY + MAX_H * 0.6 + 40;
       if (step.heap != null) height = heapY + this.treeHeight(n) + 20;
-      return { n, bw, maxV, width, auxY, heapY, height };
+      if (step.calls) height += CALLS_H;
+      return { n, bw, maxV, width, auxY, heapY, height, xi, xa, top: step.calls ? CALLS_H : 0 };
     }
 
     treeHeight(n) { return (Math.floor(Math.log2(Math.max(1, n))) + 1) * 64; }
@@ -75,7 +81,7 @@
     positions(step, g) {
       const pos = new Map();
       const place = (arr, row) => arr && arr.forEach((it, i) => {
-        if (it) pos.set(it.id, { x: i * (g.bw + GAP), row, v: it.v });
+        if (it) pos.set(it.id, { x: row ? g.xa(i) : g.xi(i), row, v: it.v });
       });
       place(step.main, 0);
       place(step.aux, 1);
@@ -103,7 +109,8 @@
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, this.W, this.H);
-      ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * ox, dpr * oy);
+      const top = lerp(ga.top, g.top, e);
+      ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * ox, dpr * (oy + top * z));
 
       const showVals = g.n <= 24;
       const rowY = (row, h, geo) => (row === 0 ? MAX_H - h : geo.auxY + MAX_H * 0.6 - h * 0.6);
@@ -112,7 +119,7 @@
       // Range band (the part of the array the algorithm is working on).
       if (b.range) {
         const [lo, hi] = b.range;
-        roundRect(ctx, lo * (g.bw + GAP) - 4, -8, (hi - lo + 1) * (g.bw + GAP) - GAP + 8, MAX_H + 40, 10);
+        roundRect(ctx, g.xi(lo) - 4, -8, g.xi(hi) + g.bw - g.xi(lo) + 8, MAX_H + 40, 10);
         ctx.fillStyle = c.accentSoft;
         ctx.fill();
       }
@@ -127,7 +134,7 @@
         for (let i = 0; i < g.n; i++) {
           const lo = b.range ? b.range[0] : 0, hi = b.range ? b.range[1] : g.n - 1;
           if (i < lo || i > hi) continue;
-          roundRect(ctx, i * (g.bw + GAP), g.auxY, g.bw, MAX_H * 0.6, 6);
+          roundRect(ctx, g.xa(i), g.auxY, g.bw, MAX_H * 0.6, 6);
           ctx.stroke();
         }
         ctx.setLineDash([]);
@@ -143,7 +150,7 @@
       ctx.font = `600 12px ${this.font}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      for (let i = 0; i < g.n; i++) ctx.fillText(String(i), i * (g.bw + GAP) + g.bw / 2, MAX_H + 6);
+      for (let i = 0; i < g.n; i++) ctx.fillText(String(i), g.xi(i) + g.bw / 2, MAX_H + 6);
 
       // Bars, blended by id.
       const pb = this.positions(b, g);
@@ -180,7 +187,7 @@
 
       // Pointers (i, j, key …) under the array.
       b.marks.forEach((m, n) => {
-        const x = m.i * (g.bw + GAP) + g.bw / 2;
+        const x = g.xi(m.i) + g.bw / 2;
         const y = MAX_H + 26 + (n % 2) * 0;
         ctx.fillStyle = c.accent;
         ctx.beginPath();
@@ -196,7 +203,34 @@
         ctx.fillText(m.label, x, y + 14 + same * 15);
       });
 
+      if (b.calls) this.calls(b, g);
       if (b.heap != null) this.tree(b, g, done);
+    }
+
+
+    // Merge sort, trust mode: each recursive call drawn as a labelled box above its half.
+    calls(b, g) {
+      const { ctx, c } = this;
+      b.calls.forEach((call) => {
+        const x0 = g.xi(call.lo) - 6, x1 = g.xi(call.hi) + g.bw + 6;
+        const y = -CALLS_H + 4, h = 34;
+        const col = call.state === 'sorted' ? c.good : call.state === 'running' ? c.accent : c.muted;
+        const soft = call.state === 'sorted' ? c.goodSoft : call.state === 'running' ? c.accentSoft : c.panel;
+        roundRect(ctx, x0, y, x1 - x0, h, 8);
+        ctx.fillStyle = soft;
+        ctx.fill();
+        ctx.setLineDash(call.state === 'pending' ? [5, 4] : []);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = col;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = col;
+        ctx.font = `750 15px ${this.font}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const label = `mergeSort(${call.lo}, ${call.hi})` + (call.state === 'sorted' ? '  ✓ sorted' : call.state === 'running' ? '  — trust it' : '');
+        ctx.fillText(label, (x0 + x1) / 2, y + h / 2 + 0.5);
+      });
     }
 
     // Heap sort: the array drawn as a binary tree (only the heap part is linked).

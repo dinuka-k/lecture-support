@@ -348,6 +348,7 @@
     rec.split = mid;
     rec.calls = [{ lo: 0, hi: mid, state: 'magic-pending' }, { lo: mid + 1, hi: n - 1, state: 'magic-pending' }];
     rec.step(`Split at mid = ${mid}: left half 0–${mid}, right half ${mid + 1}–${n - 1}.`, { line: 2 });
+    const before = a.slice(); // the halves as they were before the magic
     [0, 1].forEach((side) => {
       const c = rec.calls[side];
       const hl = {};
@@ -386,17 +387,58 @@
     }
     for (let t = 0; t < n; t++) a[t] = rec.aux[t];
     rec.aux = null;
-    rec.calls = null;
     rec.split = null;
+    const after = a.slice();
     rec.step(`Copy temp back: the whole array is sorted, using at most ${n - 1} comparisons in the merge. But we cheated — what was the magic?`, { line: 6 });
+
+    // The reveal: rewind to the moment before the magic and look inside each box.
+    a.splice(0, n, ...before);
     rec.split = mid;
-    rec.code = null; // the real pseudocode: the magic line becomes the recursive calls
-    rec.calls = [{ lo: 0, hi: mid, state: 'reveal' }, { lo: mid + 1, hi: n - 1, state: 'reveal' }];
-    rec.step(`The magic is merge sort itself! To sort a half, call mergeSort(0, ${mid}) and mergeSort(${mid + 1}, ${n - 1}): each one splits its half, sorts the two quarters the same way, and merges them.`, { line: 3 });
-    rec.step('It keeps splitting until a piece has just one element — and one element is already sorted (the base case), so the recursion stops there. Every level just merges.', { line: 1 });
-    rec.calls = null;
+    rec.code = null; // real pseudocode: the magic line becomes the recursive calls
+    rec.calls.forEach((c) => { c.state = 'reveal'; });
+    rec.step('Let\'s go back to the moment before the magic and look inside the boxes. The magic is merge sort itself: each box is a call to mergeSort() on its half.', { line: 3 });
+    const inner = (lo, hi, who) => {
+      if (lo >= hi) {
+        rec.step(`${who}: mergeSort(${lo}, ${hi}) has one element (${v(a[lo])}) — already sorted. This base case is where the recursion stops.`, { line: 1, range: [lo, lo] });
+        return;
+      }
+      const m = (lo + hi) >> 1;
+      rec.step(`${who}: mergeSort(${lo}, ${hi}) splits into ${lo}–${m} and ${m + 1}–${hi}, and sorts each part with mergeSort again.`, { line: 3, range: [lo, hi] });
+      inner(lo, m, who);
+      inner(m + 1, hi, who);
+      rec.aux = Array(n).fill(null);
+      let x = lo, y = m + 1, k = lo;
+      while (x <= m || y <= hi) {
+        let take;
+        if (x > m) take = y++;
+        else if (y > hi) take = x++;
+        else {
+          rec.stats.cmp++;
+          take = v(a[x]) <= v(a[y]) ? x++ : y++;
+        }
+        rec.aux[k++] = a[take];
+        a[take] = null;
+        rec.stats.swp++;
+      }
+      rec.step(`${who}: merge ${lo}–${m} and ${m + 1}–${hi} into temp — the same merge we watched, just smaller.`, { line: 4, range: [lo, hi] });
+      for (let t = lo; t <= hi; t++) a[t] = rec.aux[t];
+      rec.aux = null;
+      rec.step(`${who}: copy back — positions ${lo}–${hi} are sorted: ${a.slice(lo, hi + 1).map(v).join(', ')}.`, { line: 6, range: [lo, hi] });
+    };
+    [0, 1].forEach((side) => {
+      const c = rec.calls[side];
+      c.state = 'running';
+      inner(c.lo, c.hi, `Inside mergeSort(${c.lo}, ${c.hi})`);
+      c.state = 'reveal-done';
+      rec.step(`That is how the ${side ? 'right' : 'left'} half got sorted: no magic, just mergeSort calling itself on smaller and smaller pieces.`, { line: 3 });
+    });
+
+    // Back to the present: the top-level merge already happened, so jump to its result.
+    a.splice(0, n, ...after);
     rec.split = null;
     a.forEach((it) => rec.done.add(it.id));
+    rec.step('Back to where we were: both halves came back sorted, and the merge we already watched produced the final array. No need to merge again.', { line: 6 });
+    rec.calls = null;
     rec.step('So merge sort = split, sort both halves recursively, merge. Trust the recursion; the only work you write is the merge.', { line: 0, status: 'success' });
   }
 

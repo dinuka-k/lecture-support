@@ -15,10 +15,17 @@
   const CELL = 46;
   const CELL_H = 40;
   const PAD = 6;
-  const NODE_H = CELL_H + PAD * 2;
+  // Tree view vs disk view: in the disk view every node is drawn as a page with its
+  // child-page pointers (internal) or row pointers + next-leaf pointer (leaf).
+  let DISK = false;
+  let HDR = 0; // page header strip height
+  let NODE_H = CELL_H + PAD * 2;
+  const PTR = 40; // width of a child-pointer cell
+  const NEXT = 50; // width of the next-leaf cell
+  const RID_H = 18; // row-pointer line under each leaf key
   const KEY_W = CELL - 6;
   const KEY_H = CELL_H - 6;
-  const LEVEL = 104;
+  let LEVEL = 104;
   const GAP = 36; // room for the leaf-link arrows
   const GHOST_Y = 38;
   const MIN_Z = 0.15;
@@ -28,7 +35,22 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-  const nodeWidth = (keyCount) => PAD * 2 + Math.max(keyCount, 1) * CELL;
+  function setGeometry(disk) {
+    DISK = disk;
+    HDR = disk ? 22 : 0;
+    NODE_H = HDR + CELL_H + PAD * 2 + (disk ? RID_H : 0);
+    LEVEL = disk ? 160 : 104;
+  }
+  const isLeafG = (n) => !(n.children || n.kids).length;
+  function nodeWidth(n) {
+    const k = Math.max(n.keys.length, 1);
+    if (!DISK) return PAD * 2 + k * CELL;
+    return isLeafG(n) ? PAD * 2 + k * CELL + NEXT : PAD * 2 + n.keys.length * CELL + (n.keys.length + 1) * PTR;
+  }
+  // x of key j / of child pointer idx inside a node whose content starts at `left`
+  const keyX = (left, j, leaf) => (DISK && !leaf ? left + PTR + j * (CELL + PTR) + CELL / 2 : left + j * CELL + CELL / 2);
+  const ptrX = (left, idx) => (DISK ? left + idx * (CELL + PTR) + PTR / 2 : left + idx * CELL);
+  const HEAP_W = 168, HEAP_ROW = 24, HEAP_GAP = 18;
   const pick = (map, id) => (map && map[id] != null ? map[id] : null);
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -50,13 +72,13 @@
     const measure = (n) => {
       let kids = 0;
       n.children.forEach((c, i) => { kids += measure(c) + (i ? GAP : 0); });
-      const s = Math.max(nodeWidth(n.keys.length), kids);
+      const s = Math.max(nodeWidth(n), kids);
       span.set(n.id, s);
       return s;
     };
     const place = (n, left, depth) => {
       const s = span.get(n.id);
-      const w = nodeWidth(n.keys.length);
+      const w = nodeWidth(n);
       let cx = left + s / 2;
       if (n.children.length) {
         const kids = n.children.reduce((a, c, i) => a + span.get(c.id) + (i ? GAP : 0), 0);
@@ -97,7 +119,7 @@
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     nodes.forEach((g) => {
       const left = g.cx - g.w / 2 + PAD;
-      g.keys.forEach((k, j) => keys.set(g.kids.length ? 's' + k : k, { x: left + j * CELL + CELL / 2, y: g.y + PAD + CELL_H / 2 }));
+      g.keys.forEach((k, j) => keys.set(g.kids.length ? 's' + k : k, { x: keyX(left, j, !g.kids.length), y: g.y + HDR + PAD + CELL_H / 2 }));
       g.kids.forEach((cid, j) => links.set(cid, { parent: g.id, idx: j }));
       minX = Math.min(minX, g.cx - g.w / 2);
       maxX = Math.max(maxX, g.cx + g.w / 2);
@@ -110,7 +132,7 @@
     if (step.ghost) {
       const g = step.ghost.node != null ? nodes.get(step.ghost.node) : null;
       ghost = g
-        ? { key: step.ghost.key, x: g.cx - g.w / 2 + PAD + step.ghost.gap * CELL, y: g.y - GHOST_Y }
+        ? { key: step.ghost.key, x: g.kids.length ? ptrX(g.cx - g.w / 2 + PAD, step.ghost.gap) : g.cx - g.w / 2 + PAD + step.ghost.gap * CELL, y: g.y - GHOST_Y }
         : { key: step.ghost.key, x: 0, y: -GHOST_Y };
       ghost.from = step.ghost.from || null;
       minX = Math.min(minX, ghost.x - KEY_W);
@@ -119,7 +141,29 @@
     }
     const leafOrder = [];
     (function walk(n) { if (!n) return; if (!n.children.length) leafOrder.push(n.id); else n.children.forEach(walk); })(step.tree);
-    return { step, nodes, keys, links, ghost, leafOrder, bounds: { minX, minY, maxX, maxY } };
+
+    // Disk view: the table's heap pages sit below the index; each row has a position.
+    let heap = null;
+    if (DISK && step.heap) {
+      const pages = step.heap;
+      const total = pages.length * (HEAP_W + HEAP_GAP) - HEAP_GAP;
+      const y = maxY + 110;
+      let x = (minX + maxX) / 2 - total / 2;
+      const rows = new Map();
+      const out = pages.map((rws, no) => {
+        const pg = { no, x, y, w: HEAP_W, h: 24 + rws.length * HEAP_ROW + 6, rows: rws };
+        rws.forEach((r, i) => { if (r) rows.set(r.k, { x: x + 6, y: y + 24 + i * HEAP_ROW + HEAP_ROW / 2, page: no, slot: i, w: HEAP_W - 12 }); });
+        x += HEAP_W + HEAP_GAP;
+        return pg;
+      });
+      heap = { pages: out, rows, y };
+      if (out.length) {
+        minX = Math.min(minX, out[0].x);
+        maxX = Math.max(maxX, out[out.length - 1].x + HEAP_W);
+        maxY = Math.max(maxY, y + Math.max(...out.map((p) => p.h)));
+      }
+    }
+    return { step, nodes, keys, links, ghost, leafOrder, heap, bounds: { minX, minY, maxX, maxY } };
   }
 
   class BPlusView {
@@ -152,7 +196,8 @@
     readTheme() {
       const cs = getComputedStyle(document.documentElement);
       const names = ['panel', 'ink', 'muted', 'line-strong', 'accent', 'on-strong', 'good', 'warn', 'warn-soft',
-        'bad', 'bad-soft', 'violet', 'teal', 'orange', 'key-bg', 'grid', 'node-shadow'];
+        'bad', 'bad-soft', 'violet', 'teal', 'orange', 'key-bg', 'grid', 'node-shadow',
+        'line', 'violet-soft', 'teal-soft', 'orange-soft', 'good-soft', 'accent-soft'];
       this.c = {};
       names.forEach((n) => { this.c[n.replace(/-(\w)/g, (_, ch) => ch.toUpperCase())] = cs.getPropertyValue('--' + n).trim(); });
       this.font = cs.getPropertyValue('--font').trim() || 'system-ui, sans-serif';
@@ -340,6 +385,7 @@
           ctx.stroke();
           ctx.setLineDash([]);
         }
+        if (DISK) this.paintPage(FB.nodes.get(id) || (FA && FA.nodes.get(id)), x, g, FB);
         if (g.alpha > 0.5) this.hit.nodes.push({ id, x, y: g.y, w: g.w, h: NODE_H });
       });
 
@@ -382,9 +428,131 @@
         });
       }
 
+      if (DISK) this.paintHeap(FB, b);
       this.paintGhosts(FA, FB, e);
       ctx.globalAlpha = 1;
     }
+
+    // Disk view: header, child-page pointers, row pointers and next-leaf pointer of one node.
+    paintPage(n, x, g, FB) {
+      if (!n || g.alpha <= 0.01) return;
+      const { ctx, c } = this;
+      const leaf = !n.kids.length;
+      const left = x + PAD;
+      const mono = getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
+      ctx.save();
+      ctx.globalAlpha = g.alpha;
+      ctx.font = `750 12px ${this.font}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = leaf ? c.teal : c.violet;
+      ctx.fillText(`page ${n.id} · ${leaf ? 'leaf' : 'internal'}`, x + 8, g.y + HDR / 2 + 2);
+      ctx.strokeStyle = c.line;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 4, g.y + HDR);
+      ctx.lineTo(x + g.w - 4, g.y + HDR);
+      ctx.stroke();
+      const cy = g.y + HDR + PAD + CELL_H / 2;
+      const cell = (cx, w, text, col, bg) => {
+        roundRect(ctx, cx - w / 2 + 2, cy - CELL_H / 2 + 4, w - 4, CELL_H - 8, 6);
+        ctx.fillStyle = bg;
+        ctx.fill();
+        ctx.fillStyle = col;
+        ctx.font = `700 12px ${mono}`;
+        ctx.textAlign = 'center';
+        ctx.fillText(text, cx, cy + 0.5);
+      };
+      if (!leaf) {
+        n.kids.forEach((kid, i) => cell(ptrX(left, i), PTR, `p${kid}`, c.violet, c.violetSoft));
+      } else {
+        const rows = FB.heap ? FB.heap.rows : new Map();
+        ctx.font = `650 11px ${mono}`;
+        n.keys.forEach((k, j) => {
+          const r = rows.get(k);
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'center';
+          ctx.fillText(r ? `(p${r.page + 1},${r.slot})` : '', keyX(left, j, true), cy + CELL_H / 2 + RID_H / 2 + 1);
+        });
+        const order = FB.leafOrder;
+        const nx = order[order.indexOf(n.id) + 1];
+        cell(x + g.w - PAD - NEXT / 2, NEXT, nx ? `→p${nx}` : 'null', c.teal, c.tealSoft);
+      }
+      ctx.restore();
+    }
+
+    // Disk view: the table's heap pages, and row-pointer arrows for the keys in focus.
+    paintHeap(FB, b) {
+      const H = FB.heap;
+      if (!H) return;
+      const { ctx, c } = this;
+      const mono = getComputedStyle(document.documentElement).getPropertyValue('--mono').trim() || 'monospace';
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = c.muted;
+      ctx.font = `700 14px ${this.font}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      if (H.pages.length) ctx.fillText('Table file (heap pages): rows in insertion order. Row pointer = (heap page, slot)', H.pages[0].x, H.y - 12);
+      const focus = new Set(Object.keys(b.keys).filter((k) => ['found', 'new', 'delete'].includes(b.keys[k])).map(Number));
+      (b.heapRead || []).forEach((k) => focus.add(k));
+      const readPages = new Set((b.heapRead || []).map((k) => (H.rows.get(k) ? H.rows.get(k).page : -1)));
+      H.pages.forEach((pg) => {
+        const read = readPages.has(pg.no);
+        roundRect(ctx, pg.x, pg.y, pg.w, pg.h, 8);
+        ctx.fillStyle = read ? c.orangeSoft : c.panel;
+        ctx.fill();
+        ctx.lineWidth = read ? 3 : 1.3;
+        ctx.strokeStyle = read ? c.orange : c.lineStrong;
+        ctx.stroke();
+        ctx.fillStyle = c.accent;
+        ctx.font = `750 12px ${this.font}`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`heap page ${pg.no + 1}`, pg.x + 9, pg.y + 13);
+        pg.rows.forEach((r, i) => {
+          const y = pg.y + 24 + i * HEAP_ROW;
+          if (r && focus.has(r.k)) {
+            roundRect(ctx, pg.x + 4, y + 1, pg.w - 8, HEAP_ROW - 2, 4);
+            ctx.fillStyle = b.keys[r.k] === 'delete' ? c.badSoft : c.goodSoft;
+            ctx.fill();
+          }
+          ctx.fillStyle = r ? c.ink : c.muted;
+          ctx.font = `600 12.5px ${mono}`;
+          ctx.fillText(r ? `${i}: ${r.k}  ${r.name}` : `${i}: (empty)`, pg.x + 10, y + HEAP_ROW / 2 + 0.5);
+        });
+      });
+      // Row pointers: leaf entry → heap row, for the keys being looked at.
+      focus.forEach((k) => {
+        const kp = FB.keys.get(k), rp = H.rows.get(k);
+        if (!kp || !rp) return;
+        const sx = kp.x, sy = kp.y + CELL_H / 2 + RID_H, ex = rp.x + rp.w / 2, ey = rp.y - HEAP_ROW / 2;
+        ctx.strokeStyle = c.good;
+        ctx.fillStyle = c.good;
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.bezierCurveTo(sx, (sy + ey) / 2, ex, (sy + ey) / 2, ex, ey - 4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(ex, ey - 1);
+        ctx.lineTo(ex - 6, ey - 10);
+        ctx.lineTo(ex + 6, ey - 10);
+        ctx.closePath();
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    setDisk(on) {
+      setGeometry(on);
+      this.cache = new WeakMap();
+      this.dirty = true;
+      this.setAutoFit(true);
+    }
+
 
     paintGrid() {
       const { ctx, cam, W, H } = this;
@@ -441,7 +609,7 @@
       const { ctx, c } = this;
       const a = FA ? FA.step : null;
       const b = FB.step;
-      const slotX = (g, idx) => g.cx - g.w / 2 + PAD + idx * CELL;
+      const slotX = (g, idx) => ptrX(g.cx - g.w / 2 + PAD, idx);
       const ids = new Set(FB.links.keys());
       if (FA) FA.links.forEach((_, id) => ids.add(id));
       ctx.lineCap = 'round';
@@ -610,8 +778,9 @@
         const g1 = geo.get(order[i]), g2 = geo.get(order[i + 1]);
         if (!g1 || !g2) continue;
         const on = links[order[i]] === 'path';
-        const x1 = g1.cx + g1.w / 2, x2 = g2.cx - g2.w / 2;
-        const y1 = g1.y + NODE_H * 0.62, y2 = g2.y + NODE_H * 0.62;
+        const x1 = DISK ? g1.cx + g1.w / 2 - PAD - 8 : g1.cx + g1.w / 2, x2 = g2.cx - g2.w / 2;
+        const y1 = DISK ? g1.y + HDR + PAD + CELL_H / 2 : g1.y + NODE_H * 0.62;
+        const y2 = DISK ? g2.y + HDR + PAD + CELL_H / 2 : g2.y + NODE_H * 0.62;
         if (x2 - x1 < 6) continue;
         ctx.save();
         ctx.globalAlpha = Math.min(g1.alpha, g2.alpha);

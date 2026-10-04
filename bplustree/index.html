@@ -33,6 +33,7 @@
     <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
     <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-disk" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
   </svg>
 
   <div class="app">
@@ -67,6 +68,8 @@
         <button id="btnUndo" class="btn btn-icon" title="Undo last operation (Ctrl+Z)" aria-label="Undo"><svg class="icon"><use href="#i-undo"/></svg></button>
         <button id="btnClear" class="btn" title="Remove all keys">Clear</button>
       </div>
+
+      <button id="btnDisk" class="btn" title="Switch between the plain tree and the on-disk page layout"><svg class="icon"><use href="#i-disk"/></svg><span>Disk view</span></button>
 
       <div class="tools">
         <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help & shortcuts (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
@@ -156,6 +159,18 @@
         </section>
 
         <section class="panel">
+          <h2>How a node is stored</h2>
+          <div class="anatomy">
+            <p><b>Every node is one disk page</b> (e.g. 8 KB), identified by its page number.</p>
+            <div class="layout-row"><span class="ptr">P0</span><span class="key">K1</span><span class="ptr">P1</span><span class="key">K2</span><span class="ptr">P2</span><span class="dots">…</span></div>
+            <p><b>Internal page:</b> separator keys between child-page pointers. P0 leads to keys &lt; K1, P1 to K1 ≤ key &lt; K2, and so on.</p>
+            <div class="layout-row"><span class="key">K1</span><span class="rid">RID</span><span class="key">K2</span><span class="rid">RID</span><span class="dots">…</span><span class="nxt">next</span></div>
+            <p><b>Leaf page:</b> (key, row pointer) pairs in key order. A row pointer (RID) = (heap page, slot) of the row in the table file. The last field points to the next leaf page.</p>
+            <p class="small">Why so few levels? With 4-byte keys and 6-byte pointers an 8 KB page holds ~800 pointers, so 3 levels index 800³ ≈ 500 million rows: a lookup is ~3 index page reads + 1 table page read.</p>
+          </div>
+        </section>
+
+        <section class="panel">
           <h2>Legend</h2>
           <ul class="legend">
             <li><span class="sw sw-compare"></span>Compared key</li>
@@ -184,6 +199,7 @@
           <h3>Operations</h3>
           <ul>
             <li>Type one or more keys (<code>42</code> or <code>10, 20, 5</code>) and press <b>Insert</b>, <b>Search</b> or <b>Delete</b>. <span class="kbd">Enter</span> inserts.</li>
+            <li><b>Disk view</b> (top bar) draws each node as a page: page number, child-page pointers, (key, row pointer) entries and the next-leaf pointer, with the table's heap pages below. Searches end by following the row pointer.</li>
             <li><b>Range</b>: type two keys (<code>20 60</code>) — one search down, then a walk along the linked leaves.</li>
             <li>Drag a number from the <b>key tray</b> onto the canvas to insert it, or onto <b>Search</b> to look for it. Click a tray number to insert it.</li>
             <li>Drag a key out of the tree onto <b>Delete</b> to delete it, or onto <b>Search</b> to search for it.</li>

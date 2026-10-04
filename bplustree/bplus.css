@@ -525,3 +525,15 @@ body.dragging * { cursor: grabbing !important; }
   .ops { flex: 1 1 100%; }
 }
 .sw-link { background: linear-gradient(transparent 45%, var(--teal) 45%, var(--teal) 60%, transparent 60%); }
+
+/* ---------- Disk view: node anatomy panel ---------- */
+
+.anatomy p { margin: 6px 0; font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+.anatomy p.small { font-size: 12px; color: var(--muted); }
+.layout-row { display: flex; gap: 3px; margin: 8px 0 4px; font: 700 12px var(--mono); }
+.layout-row span { padding: 4px 7px; border-radius: 5px; }
+.layout-row .ptr { background: var(--violet-soft); color: var(--violet); }
+.layout-row .key { background: var(--key-bg); color: var(--ink); border: 1px solid var(--line-strong); }
+.layout-row .rid { background: var(--good-soft); color: var(--good); }
+.layout-row .nxt { background: var(--teal-soft); color: var(--teal); }
+.layout-row .dots { color: var(--muted); }

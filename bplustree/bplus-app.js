@@ -12,7 +12,7 @@
   // ---------- Preferences (remembered in this browser only) ----------
 
   const PREFS_KEY = 'lecture-demos.bplustree';
-  const prefs = { order: 4, splitBias: 'left', deleteWith: 'predecessor', speed: 1, autoplay: true, sidebar: true };
+  const prefs = { disk: true, order: 4, splitBias: 'left', deleteWith: 'predecessor', speed: 1, autoplay: true, sidebar: true };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); } catch (e) { /* storage unavailable */ }
   const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
@@ -73,9 +73,37 @@
   const animMs = () => 720 / prefs.speed;
   const holdMs = (step) => (step.status === 'info' ? 650 : 1100) / prefs.speed;
 
+  // ---------- The table file (heap): where the rows really live ----------
+  // Each heap page holds 4 rows; a row pointer (RID) is (page, slot). Inserting a key
+  // first stores its row in the heap, then adds (key, RID) to a leaf of the index.
+
+  const NAMES = ['Nimal', 'Kasun', 'Amaya', 'Saman', 'Dilini', 'Ruwan', 'Chamari', 'Ishara', 'Kavi', 'Sachini', 'Hasini', 'Lahiru', 'Pasindu', 'Dinithi', 'Malith', 'Sanduni', 'Yasiru', 'Oshadi', 'Nuwan', 'Thilini'];
+  const ROWS_PER_HEAP_PAGE = 4;
+  let heap = [];
+  const heapSnap = () => heap.map((pg) => pg.slice());
+  function addRow(k) {
+    const row = { k, name: NAMES[Math.abs(k * 7) % NAMES.length] };
+    for (const pg of heap) {
+      const i = pg.indexOf(null);
+      if (i >= 0) { pg[i] = row; return; }
+    }
+    if (!heap.length || heap[heap.length - 1].length >= ROWS_PER_HEAP_PAGE) heap.push([]);
+    heap[heap.length - 1].push(row);
+  }
+  function removeRow(k) {
+    heap.forEach((pg) => { const i = pg.findIndex((r) => r && r.k === k); if (i >= 0) pg[i] = null; });
+  }
+  function ridOf(k) {
+    for (let p = 0; p < heap.length; p++) {
+      const i = heap[p].findIndex((r) => r && r.k === k);
+      if (i >= 0) return { page: p, slot: i, row: heap[p][i] };
+    }
+    return null;
+  }
+
   function stateStep(msg, status = 'info') {
     return {
-      op: 'idle', label: '', code: null, tree: tree.snapshot(), msg, status, line: -1,
+      op: 'idle', label: '', code: null, tree: tree.snapshot(), heap: heapSnap(), msg, status, line: -1,
       nodes: {}, keys: {}, edges: {}, ghost: null, origin: null, into: null,
     };
   }
@@ -109,18 +137,44 @@
   function run(type, key, from, hi) {
     const had = tree.has(key);
     const before = present.slice();
+    const heapBefore = heapSnap();
     const steps = type === 'range' ? tree.range(key, hi) : tree[type](key);
     if (from && steps[0].ghost) steps[0].ghost.from = from;
     const has = tree.has(key);
     if (!had && has) present.push(key);
     else if (had && !has) present = present.filter((k) => k !== key);
     if (type === 'insert') trayRemove(key);
+    if (!had && has) addRow(key);
+    else if (had && !has) removeRow(key);
+    const heapAfter = heapSnap();
+    // INSERT writes the row first, then the index entry; DELETE removes the row at the end.
+    steps.forEach((s, i) => { s.heap = type === 'delete' && i < steps.length - 1 ? heapBefore : heapAfter; });
+    // Searching the index ends with a row pointer; following it costs one more page read.
+    if (type === 'search' && has) {
+      const r = ridOf(key);
+      const last = steps[steps.length - 1];
+      steps.push(Object.assign({}, last, {
+        msg: `The leaf entry for ${key} holds the row pointer (heap page ${r.page + 1}, slot ${r.slot}). Read that heap page to get the row: ${key} · ${r.row.name}. Total: ${steps.filter((s) => s.nodes && Object.keys(s.nodes).length).length} index pages + 1 heap page.`,
+        heapRead: [key], line: -1, ghost: null,
+      }));
+    }
+    if (type === 'range') {
+      const found = tree.keys().filter((k) => k >= key && k <= hi);
+      const pages = new Set(found.map((k) => ridOf(k).page));
+      const last = steps[steps.length - 1];
+      if (found.length) {
+        steps.push(Object.assign({}, last, {
+          msg: `Follow the ${found.length} row pointers into the table: ${pages.size} heap page${pages.size === 1 ? '' : 's'} to read. The index gives the order; the rows themselves can sit anywhere in the heap.`,
+          heapRead: found, line: -1,
+        }));
+      }
+    }
     steps.forEach((s) => { if (s.origin) view.inheritOffsets(s.origin); });
 
     const wasAtEnd = T.cur === T.steps.length - 1;
     const start = T.steps.length;
     T.steps.push(...steps);
-    T.ops.push({ type, key, label: steps[0].label, start, end: T.steps.length, before });
+    T.ops.push({ type, key, label: steps[0].label, start, end: T.steps.length, before, heapBefore });
     if (prefs.autoplay) T.playing = true;
     else if (wasAtEnd) go(start);
     refresh();
@@ -133,6 +187,7 @@
     T.steps.length = op.start;
     tree.load(T.steps[op.start - 1].tree);
     present = op.before;
+    heap = op.heapBefore.map((pg) => pg.slice());
     T.playing = false;
     T.cur = Math.min(T.cur, T.steps.length - 1);
     animateTo(shown, T.steps[T.cur]);
@@ -368,6 +423,8 @@
     tree.clear();
     keys.forEach((k) => tree.insert(k, false));
     present = keys;
+    heap = [];
+    keys.forEach(addRow);
     view.tidy();
     const list = keys.length > 20 ? keys.slice(0, 20).join(', ') + ', …' : keys.join(', ');
     resetTimeline(`Built a random B+ tree of order ${tree.order} by inserting ${n} keys: ${list}. Try deleting some of them.`);
@@ -375,6 +432,7 @@
 
   function clearTree() {
     tree.clear();
+    heap = [];
     present = [];
     view.tidy();
     resetTimeline('The tree is empty. Type a key and press Insert, or drag a number from the tray onto the canvas.');
@@ -642,6 +700,19 @@
     document.body.classList.toggle('no-sidebar', !prefs.sidebar);
     $('btnSidebar').classList.toggle('on', prefs.sidebar);
   }
+  function applyDisk() {
+    view.setDisk(prefs.disk);
+    $('btnDisk').classList.toggle('on', prefs.disk);
+    $('btnDisk').querySelector('span').textContent = prefs.disk ? 'Disk view' : 'Tree view';
+    document.body.classList.toggle('disk', prefs.disk);
+  }
+  $('btnDisk').addEventListener('click', () => {
+    prefs.disk = !prefs.disk;
+    savePrefs();
+    applyDisk();
+    toast(prefs.disk ? 'Disk view: every node is a page with child-page pointers, leaf entries carry row pointers into the table.' : 'Tree view: just the keys.');
+  });
+
   $('btnSidebar').addEventListener('click', () => {
     prefs.sidebar = !prefs.sidebar;
     savePrefs();
@@ -684,6 +755,7 @@
   // ---------- Start ----------
 
   applySidebar();
+  applyDisk();
   syncSegs();
   renderFormula();
   renderTray();

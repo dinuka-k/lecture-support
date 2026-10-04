@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B+ Tree Visualizer</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="bplus.css">
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 5.5v13l10-6.5z" fill="currentColor" stroke="none"/><path d="M18.5 5.5v13"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5.5v13L9 12z" fill="currentColor" stroke="none"/><path d="M5.5 5.5v13"/></symbol>
+    <symbol id="i-end" viewBox="0 0 24 24"><path d="M3 6.5v11l7-5.5zM10.5 6.5v11l7-5.5z" fill="currentColor" stroke="none"/><path d="M20.5 5.5v13"/></symbol>
+    <symbol id="i-start" viewBox="0 0 24 24"><path d="M21 6.5v11L14 12zM13.5 6.5v11L6.5 12z" fill="currentColor" stroke="none"/><path d="M3.5 5.5v13"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+    <symbol id="i-tidy" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="home" href="../index.html" title="All demos"><svg class="icon"><use href="#i-back"/></svg>Demos</a>
+      <h1 class="title">B+ Tree</h1>
+
+      <div class="group ops">
+        <input id="keyInput" class="input key-input" placeholder="Key(s), e.g. 42 or 10, 20, 5" autocomplete="off" spellcheck="false" aria-label="Keys">
+        <button id="btnInsert" class="btn btn-primary" title="Insert (Enter)">Insert</button>
+        <button id="btnSearch" class="btn" title="Search">Search</button>
+        <button id="btnRange" class="btn" title="Range search: type two keys, e.g. 20 60">Range</button>
+        <button id="btnDelete" class="btn btn-danger" title="Delete">Delete</button>
+      </div>
+
+      <label class="group field" title="Order m = maximum number of children per node">
+        <span>Order <i>m</i></span>
+        <select id="orderSelect" class="input">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+        </select>
+      </label>
+
+      <div class="group">
+        <button id="btnRandomTree" class="btn" title="Build a random tree instantly"><svg class="icon"><use href="#i-dice"/></svg>Random tree</button>
+        <input id="randomCount" class="input count" type="number" min="1" max="150" value="15" aria-label="Number of random keys" title="Number of keys">
+        <button id="btnUndo" class="btn btn-icon" title="Undo last operation (Ctrl+Z)" aria-label="Undo"><svg class="icon"><use href="#i-undo"/></svg></button>
+        <button id="btnClear" class="btn" title="Remove all keys">Clear</button>
+      </div>
+
+      <div class="tools">
+        <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help & shortcuts (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
+        <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn" title="Light / dark" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+        <button id="btnFullscreen" class="btn btn-icon btn-ghost" title="Fullscreen" aria-label="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button>
+        <button id="btnSidebar" class="btn btn-icon btn-ghost" title="Show / hide side panel" aria-label="Toggle side panel"><svg class="icon"><use href="#i-sidebar"/></svg></button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="stage">
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="canvas" aria-label="B+ tree drawing"></canvas>
+
+          <div class="caption" id="caption" data-status="info" aria-live="polite">
+            <p class="caption-text" id="captionText"></p>
+            <div class="rules" id="rules"></div>
+          </div>
+          <div class="toast" id="toast" role="status"></div>
+
+          <div class="view-ctrls" id="viewCtrls">
+            <button id="btnZoomIn" class="btn btn-icon" title="Zoom in (+)" aria-label="Zoom in"><svg class="icon"><use href="#i-plus"/></svg></button>
+            <button id="btnZoomOut" class="btn btn-icon" title="Zoom out (−)" aria-label="Zoom out"><svg class="icon"><use href="#i-minus"/></svg></button>
+            <button id="btnFit" class="btn btn-icon on" title="Keep the whole tree in view (F)" aria-label="Fit to view"><svg class="icon"><use href="#i-fit"/></svg></button>
+            <button id="btnTidy" class="btn btn-icon" title="Undo manual node moves (T)" aria-label="Tidy layout"><svg class="icon"><use href="#i-tidy"/></svg></button>
+          </div>
+
+          <div class="bottom" id="bottomOverlay">
+            <div class="tray" id="trayBox">
+              <div class="tray-label">Key tray<span>drag into the tree</span></div>
+              <div class="tray-chips" id="tray"></div>
+              <div class="tray-actions">
+                <input id="trayInput" class="input" placeholder="add…" autocomplete="off" aria-label="Add keys to tray">
+                <button id="btnTrayRandom" class="btn btn-icon" title="Add random keys" aria-label="Add random keys"><svg class="icon"><use href="#i-dice"/></svg></button>
+                <button id="btnTrayClear" class="btn btn-icon" title="Empty the tray" aria-label="Empty the tray"><svg class="icon"><use href="#i-x"/></svg></button>
+              </div>
+            </div>
+            <div class="zones">
+              <div class="zone zone-search" id="zoneSearch"><svg class="icon"><use href="#i-search"/></svg><span>Search</span></div>
+              <div class="zone zone-delete" id="zoneDelete"><svg class="icon"><use href="#i-trash"/></svg><span id="zoneDeleteLabel">Delete</span></div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="player">
+          <div class="transport">
+            <button id="btnStart" class="btn btn-icon" title="Start of this operation (Home)" aria-label="Start of operation"><svg class="icon"><use href="#i-start"/></svg></button>
+            <button id="btnBack" class="btn btn-icon" title="Previous step (←)" aria-label="Previous step"><svg class="icon"><use href="#i-prev"/></svg></button>
+            <button id="btnPlay" class="btn btn-icon btn-primary play" title="Play / pause (Space)" aria-label="Play"><svg class="icon"><use href="#i-play"/></svg></button>
+            <button id="btnNext" class="btn btn-icon" title="Next step (→)" aria-label="Next step"><svg class="icon"><use href="#i-next"/></svg></button>
+            <button id="btnEnd" class="btn btn-icon" title="Skip to the end (End)" aria-label="Skip to end"><svg class="icon"><use href="#i-end"/></svg></button>
+          </div>
+          <div class="progress">
+            <div class="progress-label"><strong id="opLabel">Ready</strong><span id="stepLabel"></span><span id="queueLabel" class="queue"></span></div>
+            <div class="progress-bar"><div id="progressFill"></div></div>
+          </div>
+          <label class="speed">Speed
+            <input id="speed" type="range" min="0.25" max="3" step="0.25" value="1">
+            <output id="speedOut">1×</output>
+          </label>
+          <label class="switch" title="Play operations automatically; turn off to advance step by step">
+            <input id="autoplay" type="checkbox" checked><span class="track"></span>Auto-play
+          </label>
+        </footer>
+      </section>
+
+      <aside class="sidebar" id="sidebar">
+        <section class="panel">
+          <h2>Steps <span id="stepsTitle"></span></h2>
+          <ol class="step-log" id="stepLog"></ol>
+        </section>
+
+        <section class="panel">
+          <h2>Pseudocode</h2>
+          <div class="pseudo" id="pseudo"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Rules</h2>
+          <div class="formula" id="formula"></div>
+          <div class="setting">
+            <div class="setting-label">Internal split when <i>m</i> is even<small id="biasNote">A full node has an even number of keys, which middle one moves up?</small></div>
+            <div class="seg" id="segBias" data-prop="splitBias">
+              <button data-v="left">Left</button><button data-v="right">Right</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Legend</h2>
+          <ul class="legend">
+            <li><span class="sw sw-compare"></span>Compared key</li>
+            <li><span class="sw sw-new"></span>New key</li>
+            <li><span class="sw sw-found"></span>Found</li>
+            <li><span class="sw sw-median"></span>Key going up (copy / move)</li>
+            <li><span class="sw sw-delete"></span>Being deleted</li>
+            <li><span class="sw sw-pred"></span>Borrowed key</li>
+            <li><span class="sw sw-sep"></span>Separator from parent</li>
+            <li><span class="sw sw-visit"></span>Current node</li>
+            <li><span class="sw sw-flow"></span>Overflow / underflow</li>
+            <li><span class="sw sw-sib"></span>Sibling</li>
+            <li><span class="sw sw-link"></span>Leaf link (next leaf)</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal" id="help" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="btn btn-icon btn-ghost modal-close" id="btnHelpClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      <h2 id="helpTitle">Using the B+ tree demo</h2>
+      <div class="help-grid">
+        <section>
+          <h3>Operations</h3>
+          <ul>
+            <li>Type one or more keys (<code>42</code> or <code>10, 20, 5</code>) and press <b>Insert</b>, <b>Search</b> or <b>Delete</b>. <span class="kbd">Enter</span> inserts.</li>
+            <li><b>Range</b>: type two keys (<code>20 60</code>) — one search down, then a walk along the linked leaves.</li>
+            <li>Drag a number from the <b>key tray</b> onto the canvas to insert it, or onto <b>Search</b> to look for it. Click a tray number to insert it.</li>
+            <li>Drag a key out of the tree onto <b>Delete</b> to delete it, or onto <b>Search</b> to search for it.</li>
+            <li><b>Random tree</b> builds a tree instantly, handy before demonstrating deletion.</li>
+          </ul>
+          <h3>Canvas</h3>
+          <ul>
+            <li>Drag the background to pan; scroll or pinch to zoom.</li>
+            <li>Drag a node by its border (or <span class="kbd">Shift</span>-drag anywhere on it) to move it with its subtree. Double-click a node to put it back.</li>
+            <li>Double-click empty space to re-fit the tree.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Keyboard</h3>
+          <table class="keys">
+            <tr><td><span class="kbd">Space</span></td><td>Play / pause</td></tr>
+            <tr><td><span class="kbd">→</span> <span class="kbd">←</span></td><td>Next / previous step</td></tr>
+            <tr><td><span class="kbd">Home</span> <span class="kbd">End</span></td><td>Start of operation / skip to end</td></tr>
+            <tr><td><span class="kbd">I</span></td><td>Type a key</td></tr>
+            <tr><td><span class="kbd">F</span> <span class="kbd">T</span></td><td>Fit to view / tidy layout</td></tr>
+            <tr><td><span class="kbd">+</span> <span class="kbd">−</span></td><td>Zoom</td></tr>
+            <tr><td><span class="kbd">Ctrl</span> <span class="kbd">Z</span></td><td>Undo last operation</td></tr>
+            <tr><td><span class="kbd">?</span></td><td>This help</td></tr>
+          </table>
+          <h3>The rules for order <i>m</i></h3>
+          <ul>
+            <li><b>All keys live in the leaves</b>; internal nodes hold separators that only guide the search (equal keys go right).</li>
+            <li>Leaves are linked left to right, so range queries walk along the leaf level.</li>
+            <li>At most <i>m</i> children and <i>m</i> − 1 keys per node; non-root leaves keep ⌈(<i>m</i>−1)/2⌉ keys, internal nodes ⌈<i>m</i>/2⌉ − 1.</li>
+            <li><b>Leaf split</b>: the first key of the new right leaf is <b>copied</b> up. <b>Internal split</b>: the median <b>moves</b> up.</li>
+            <li><b>Delete</b> from the leaf; fix underflow by borrowing (update the separator) or merging (drop the separator). A deleted key may stay as a separator.</li>
+          </ul>
+        </section>
+      </div>
+      <p class="credit">Created by <b data-author></b></p>
+    </div>
+  </div>
+
+  <script src="../shared/shell.js"></script>
+  <script src="bplus-algo.js"></script>
+  <script src="bplus-view.js"></script>
+  <script src="bplus-app.js"></script>
+</body>
+</html>

@@ -14,6 +14,9 @@ Interactive teaching canvases by Dinuka Kodithuwakku, hosted on GitHub Pages
   and `shared/shell.js` (theme toggle, fullscreen, author name, watermark).
 - No external dependencies and no ES modules: pages must work offline and when
   opened straight from disk (`file://`).
+  Exception: `quiz/` is a live multiplayer quiz and loads PeerJS (WebRTC,
+  phones connect to the host's browser) and qrcodejs from a CDN, so it needs
+  internet.
 
 ## Author credit (required on every page)
 - The author's name is defined once, as `AUTHOR` in `shared/shell.js`. Never

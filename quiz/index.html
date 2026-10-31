@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DBMS Quiz</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></symbol>
+  </svg>
+
+  <div class="app" id="app" data-view="login">
+    <header class="topbar">
+      <a class="home" href="../index.html" title="All demos"><svg class="icon"><use href="#i-back"/></svg>Demos</a>
+      <h1 class="title">DBMS Quiz</h1>
+
+      <div class="group host-only">
+        <span class="room-chip">Room <b id="roomCode">-</b></span>
+        <span class="net"><i id="netDot" data-state="connecting"></i><span id="netText">Connecting</span></span>
+      </div>
+      <div class="group player-only">
+        <span class="me-chip"><b id="meName"></b><span><b id="meScore">0</b> pts</span></span>
+      </div>
+
+      <div class="tools">
+        <button id="btnQuestions" class="btn host-only" title="Write and edit the questions"><svg class="icon"><use href="#i-list"/></svg><span class="lbl">Questions</span></button>
+        <button id="btnNewGame" class="btn host-only" title="Back to the lobby with scores reset" hidden><svg class="icon"><use href="#i-restart"/></svg><span class="lbl">New game</span></button>
+        <button id="btnPassword" class="btn btn-icon btn-ghost host-only" title="Change the admin password" aria-label="Change password"><svg class="icon"><use href="#i-key"/></svg></button>
+        <button id="btnLogout" class="btn btn-icon btn-ghost host-only" title="Close the host screen" aria-label="Close host screen"><svg class="icon"><use href="#i-logout"/></svg></button>
+        <button id="btnLeave" class="btn btn-icon btn-ghost player-only" title="Leave the quiz" aria-label="Leave"><svg class="icon"><use href="#i-logout"/></svg></button>
+        <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
+        <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn" title="Light / dark" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+        <button id="btnFullscreen" class="btn btn-icon btn-ghost" title="Fullscreen" aria-label="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <main class="stage" data-watermark-host>
+      <!-- Join screen: students and the admin both start here. -->
+      <section class="screen login" id="scrLogin">
+        <form class="login-card" id="loginForm" autocomplete="off" novalidate>
+          <div class="login-logo" aria-hidden="true"><span class="shape s-tri"></span><span class="shape s-dia"></span><span class="shape s-cir"></span><span class="shape s-sqr"></span></div>
+          <h2>Join the DBMS quiz</h2>
+          <label class="field" id="roomWrap"><span>Room code</span>
+            <input class="input code-input" id="inRoom" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" maxlength="5">
+          </label>
+          <label class="field"><span>Nickname</span>
+            <input class="input" id="inName" maxlength="16" spellcheck="false" placeholder="Any name you like">
+          </label>
+          <label class="field" id="pwWrap" hidden><span>Admin password</span>
+            <input class="input" id="inPass" type="password" autocomplete="current-password">
+          </label>
+          <p class="login-err" id="loginErr" role="alert" hidden></p>
+          <button class="btn btn-primary btn-big" id="btnJoin" type="submit">Join</button>
+          <p class="login-hint">No sign-up needed. The room code is on the big screen.</p>
+        </form>
+      </section>
+
+      <!-- Host (admin) screen, drawn by quiz-host.js. -->
+      <section class="screen host" id="scrHost" hidden></section>
+
+      <!-- Player (phone) screen, drawn by quiz-player.js. -->
+      <section class="screen player" id="scrPlayer" hidden>
+        <div class="p-banner" id="pBanner" role="status" hidden></div>
+        <div class="p-screen" id="pBody"></div>
+      </section>
+
+      <div class="toast" id="toast" role="status"></div>
+    </main>
+  </div>
+
+  <!-- Question editor (admin) -->
+  <div class="modal" id="editor" hidden>
+    <div class="modal-card editor-card" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+      <div class="ed-top">
+        <h2 id="edTitle">Questions <small id="edCount"></small></h2>
+        <div class="ed-actions">
+          <button class="btn" data-ed="add">Add</button>
+          <button class="btn" data-ed="dup">Duplicate</button>
+          <button class="btn btn-icon" data-ed="up" title="Move up" aria-label="Move up">↑</button>
+          <button class="btn btn-icon" data-ed="down" title="Move down" aria-label="Move down">↓</button>
+          <button class="btn btn-danger" data-ed="del">Delete</button>
+          <span class="ed-sep"></span>
+          <button class="btn btn-ghost" data-ed="import" title="Load questions from a .json file">Import</button>
+          <button class="btn btn-ghost" data-ed="export" title="Save the questions as a .json file">Export</button>
+          <button class="btn btn-ghost" data-ed="reset" title="Back to the 20 built-in questions">Reset</button>
+          <button class="btn btn-primary" data-ed="close">Done</button>
+        </div>
+      </div>
+      <p class="ed-note" id="edNote" hidden>A game is running: changes apply from the next game.</p>
+      <div class="ed-body">
+        <ol class="ed-list" id="edList"></ol>
+        <div class="ed-form" id="edForm"></div>
+      </div>
+      <input type="file" id="edFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+
+  <!-- Change admin password -->
+  <div class="modal" id="pwModal" hidden>
+    <form class="modal-card pw-card" id="pwForm" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+      <h2 id="pwTitle">Change admin password</h2>
+      <label class="field"><span>Current password</span><input class="input" type="password" id="pwOld" autocomplete="current-password"></label>
+      <label class="field"><span>New password</span><input class="input" type="password" id="pwNew" autocomplete="new-password"></label>
+      <label class="field"><span>New password again</span><input class="input" type="password" id="pwNew2" autocomplete="new-password"></label>
+      <p class="login-err" id="pwErr" hidden></p>
+      <p class="note">Saved in this browser only. To change it for every device, update <code>DEFAULT_HASH</code> in quiz-app.js.</p>
+      <div class="pw-actions"><button type="button" class="btn" id="btnPwCancel">Cancel</button><button class="btn btn-primary">Save</button></div>
+    </form>
+  </div>
+
+  <!-- Help -->
+  <div class="modal" id="help" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="btn btn-icon btn-ghost modal-close" id="btnHelpClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      <h2 id="helpTitle">DBMS Quiz</h2>
+      <div class="help-grid">
+        <section>
+          <h3>Students</h3>
+          <ul>
+            <li>Scan the QR code on the big screen, or open the link and type the <b>room code</b>.</li>
+            <li>Pick any nickname: no sign-up. If the page reloads you rejoin with your score.</li>
+            <li>Tap an answer, or type a query and press <b>Submit</b>. Faster correct answers earn more: up to 1000 points, at least 500.</li>
+          </ul>
+          <h3>Query questions</h3>
+          <ul>
+            <li>Answers are compared after ignoring letter case (except inside quotes), spacing, <code>AS</code>, <code>ASC</code>, <code>INNER</code>, <code>OUTER</code> and the final <code>;</code>.</li>
+            <li>On the reveal the host sees every different answer and can click one to accept or reject it; scores update at once.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Host</h3>
+          <ul>
+            <li>Type <b>admin</b> as the nickname, then the admin password, to open the host screen.</li>
+            <li><b>Questions</b> opens the editor: multiple choice, true or false, or write a query. Export and import them as a file.</li>
+            <li>The host browser runs the game: keep this tab open. Players connect to it directly (WebRTC), so both sides need internet.</li>
+          </ul>
+          <h3>Keyboard (host)</h3>
+          <table class="keys">
+            <tr><td><span class="kbd">Space</span> <span class="kbd">Enter</span> <span class="kbd">→</span></td><td>Start, show answer, next</td></tr>
+            <tr><td><span class="kbd">?</span></td><td>This help</td></tr>
+          </table>
+        </section>
+      </div>
+      <p class="credit">Created by <b data-author></b></p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="../shared/shell.js"></script>
+  <script src="quiz-data.js"></script>
+  <script src="quiz-net.js"></script>
+  <script src="quiz-host.js"></script>
+  <script src="quiz-editor.js"></script>
+  <script src="quiz-player.js"></script>
+  <script src="quiz-app.js"></script>
+</body>
+</html>

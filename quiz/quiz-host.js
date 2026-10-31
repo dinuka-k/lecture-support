@@ -8,6 +8,7 @@
   const Q_KEY = 'lecture-demos.quiz.questions';
   const ROOM_KEY = 'lecture-demos.quiz.room';
   const GAME_KEY = 'lecture-demos.quiz.game';
+  const Q_VER_KEY = 'lecture-demos.quiz.questionsVersion';
   const SHAPES = ['tri', 'dia', 'cir', 'sqr'];
   const TF = ['True', 'False'];
   const UNDO = '<button class="btn" data-act="undo" title="Undo: reopen the question, the timer carries on (←)"><svg class="icon"><use href="#i-undo"/></svg>Reopen question</button>';
@@ -26,11 +27,21 @@
   function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ } }
   function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
 
+  // Version 2 gave every question one more minute; a list saved before that
+  // gets the extra minute once when it is loaded.
+  const Q_VERSION = 2;
+
   function loadQuestions() {
     const q = load(Q_KEY);
-    return Array.isArray(q) && q.length ? q : D.cloneDefaults();
+    if (!Array.isArray(q) || !q.length) return D.cloneDefaults();
+    if ((load(Q_VER_KEY) || 1) < 2) {
+      q.forEach((x) => { x.limit = Math.min(600, (parseInt(x.limit, 10) || 20) + 60); });
+      store(Q_KEY, q);
+      store(Q_VER_KEY, Q_VERSION);
+    }
+    return q;
   }
-  function saveQuestions() { store(Q_KEY, questions); }
+  function saveQuestions() { store(Q_KEY, questions); store(Q_VER_KEY, Q_VERSION); }
   function saveGame() { if (G) store(GAME_KEY, G); }
 
   function freshGame(code, keep) {

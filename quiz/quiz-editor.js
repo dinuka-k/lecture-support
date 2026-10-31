@@ -11,9 +11,9 @@
   }
 
   function blank(type) {
-    if (type === 'sql') return { type, topic: '', limit: 180, text: '', model: '', answers: [] };
-    if (type === 'tf') return { type, topic: '', limit: 180, text: '', correct: 0 };
-    return { type: 'mcq', topic: '', limit: 180, text: '', options: ['', '', '', ''], correct: 0 };
+    if (type === 'sql') return { type, topic: '', limit: 120, text: '', model: '', answers: [] };
+    if (type === 'tf') return { type, topic: '', limit: 90, text: '', correct: 0 };
+    return { type: 'mcq', topic: '', limit: 90, text: '', options: ['', '', '', ''], correct: 0 };
   }
 
   function save() { onSave(cleaned()); }

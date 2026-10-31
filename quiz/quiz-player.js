@@ -7,7 +7,7 @@
 
   let root = null, banner = null, net = null, cb = {}, me = null;
   let current = null;     // the question on screen
-  let deadline = 0, tick = null;
+  let startedAt = 0, tick = null;
   const drafts = {};      // typed queries, kept if the question is sent again
 
   function esc(s) {
@@ -72,8 +72,10 @@
 
   function question(m) {
     current = m;
-    deadline = Date.now() + m.remaining;
-    const head = '<div class="p-head"><span>Q' + (m.qi + 1) + ' / ' + m.total + (m.topic ? ' · ' + esc(m.topic) : '') + '</span><b class="p-timer" id="pTimer"></b></div>';
+    startedAt = Date.now() - m.elapsed;
+    const head = '<div class="p-head"><span>Q' + (m.qi + 1) + ' / ' + m.total + (m.topic ? ' · ' + esc(m.topic) : '') + '</span>' +
+      '<div class="p-timer" id="pTimer"><svg viewBox="0 0 44 44"><circle class="t-bg" cx="22" cy="22" r="19"/><circle class="t-fg" id="pRing" cx="22" cy="22" r="19"/></svg><b id="pTimerNum"></b></div></div>' +
+      '<p class="p-over" id="pOver" hidden>Time is up: you can still answer for 500 points</p>';
     const text = '<p class="p-q">' + esc(m.text) + '</p>' + (m.code ? '<pre class="q-code small">' + esc(m.code) + '</pre>' : '');
     let body;
     if (m.type === 'sql') {
@@ -103,14 +105,20 @@
     tick = setInterval(countdown, 250);
   }
 
+  // Counts down the time limit on a draining ring, then counts the total time
+  // taken: the question stays open until the host ends it.
   function countdown() {
-    const left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    const elapsed = Date.now() - startedAt;
+    const limit = current.limit * 1000;
+    const left = Math.max(0, limit - elapsed);
     const t = root.querySelector('#pTimer');
-    if (t) { t.textContent = left; t.classList.toggle('low', left <= 5); }
-    if (left <= 0) {
-      clearInterval(tick);
-      root.querySelectorAll('button, textarea').forEach((n) => { n.disabled = true; });
-    }
+    if (!t) return;
+    const sec = left > 0 ? Math.ceil(left / 1000) : Math.floor(elapsed / 1000);
+    root.querySelector('#pTimerNum').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    root.querySelector('#pRing').style.strokeDashoffset = String(119.4 * (1 - left / limit));
+    t.classList.toggle('low', left > 0 && left < 10000);
+    t.classList.toggle('over', left <= 0);
+    root.querySelector('#pOver').hidden = left > 0;
   }
 
   function answer(value) {
@@ -131,7 +139,7 @@
     const note = root.querySelector('#pWrong');
     ta.readOnly = false;
     btn.textContent = 'Submit again';
-    btn.disabled = deadline <= Date.now();
+    btn.disabled = false;
     note.textContent = 'Not correct yet (attempt ' + m.tries + '). Edit your query and submit again.';
     note.hidden = false;
     note.classList.remove('shake');

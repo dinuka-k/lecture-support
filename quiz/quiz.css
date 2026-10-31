@@ -201,14 +201,17 @@ textarea { font: inherit; color: inherit; }
 .q-answers b { color: var(--ink); font-size: 20px; }
 .q-right { padding: 4px 12px; border-radius: 999px; background: var(--good-soft); color: var(--good); font-weight: 700; }
 
-.timer { position: relative; width: 56px; height: 56px; display: grid; place-items: center; }
-.timer svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-.timer circle { fill: none; stroke-width: 4; }
+.timer { position: relative; width: 64px; height: 64px; display: grid; place-items: center; }
+.timer svg, .p-timer svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.timer circle, .p-timer circle { fill: none; stroke-width: 4; }
 .t-bg { stroke: var(--line); }
 .t-fg { stroke: var(--accent); stroke-dasharray: 119.4; stroke-linecap: round; transition: stroke-dashoffset 0.2s linear; }
-.timer b { position: relative; font-size: 20px; font-variant-numeric: tabular-nums; }
-.timer.low .t-fg { stroke: var(--bad); }
-.timer.low b { color: var(--bad); }
+.timer b { position: relative; font-size: 16px; font-variant-numeric: tabular-nums; }
+.timer.low .t-fg, .p-timer.low .t-fg { stroke: var(--bad); }
+.timer.low b, .p-timer.low b { color: var(--bad); }
+.timer.over b, .p-timer.over b { color: var(--warn); }
+.timer.over .t-bg, .p-timer.over .t-bg { stroke: var(--warn-soft); }
+.time-up { padding: 4px 12px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 700; }
 
 .q-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-height: 0; }
 .with-schema .q-body { grid-template-columns: minmax(0, 1fr) 270px; }
@@ -337,8 +340,9 @@ textarea { font: inherit; color: inherit; }
 .p-big-name { font-size: 30px; font-weight: 800; color: var(--accent); word-break: break-word; }
 
 .p-head { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-weight: 650; font-size: 14px; }
-.p-timer { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 17px; font-variant-numeric: tabular-nums; }
-.p-timer.low { background: var(--bad-soft); color: var(--bad); }
+.p-timer { position: relative; width: 56px; height: 56px; display: grid; place-items: center; color: var(--accent); }
+.p-timer b { position: relative; font-size: 14px; font-variant-numeric: tabular-nums; }
+.p-over { margin: 0; padding: 6px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 650; }
 .p-q { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; }
 
 .p-opts { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: auto; }

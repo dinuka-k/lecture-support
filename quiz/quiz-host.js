@@ -57,13 +57,14 @@
     if (saved && saved.code === code && saved.players) {
       G = saved;
       Object.values(G.players).forEach((p) => { p.online = false; });
-      if (G.phase === 'question') finishQuestion();
     } else {
       G = freshGame(code);
     }
     saveGame();
     openPeer();
     render();
+    // A question that was open before a refresh keeps running.
+    if (G.phase === 'question') tick = setInterval(updateTimer, 200);
     document.addEventListener('keydown', onKey);
   }
 
@@ -180,7 +181,8 @@
     return a.auto;
   }
 
-  // Kahoot-style: up to 1000 points, falling to 500 for an answer at the last second.
+  // Kahoot-style: up to 1000 points, falling to 500 at the end of the time limit.
+  // The question stays open after that until the host ends it; late right answers get 500.
   function points(a, qi) {
     if (!isCorrect(a, qi)) return 0;
     const limit = G.questions[qi].limit * 1000;
@@ -239,7 +241,7 @@
     return {
       t: 'question', qi: G.qi, total: G.questions.length, type: q.type, topic: q.topic || '',
       text: q.text, code: q.code || '', options: q.type === 'sql' ? [] : optionsOf(q),
-      limit: q.limit, remaining: Math.max(0, G.startedAt + q.limit * 1000 - Date.now()),
+      limit: q.limit, elapsed: Date.now() - G.startedAt,
       schema: q.type === 'sql' ? D.SCHEMA : null,
     };
   }
@@ -452,7 +454,8 @@
         '<span class="q-answers"><b id="ansCount">' + (reveal ? answers.length : ps.filter(done).length) + '</b> / <span id="ansOf">' + ps.length + '</span> ' +
           (q.type === 'sql' && !reveal ? 'solved' : 'answered') + '</span>' +
         (reveal ? '<span class="q-right">' + nRight + ' correct</span>'
-                : '<div class="timer" id="timer"><svg viewBox="0 0 44 44"><circle class="t-bg" cx="22" cy="22" r="19"/><circle class="t-fg" id="timerRing" cx="22" cy="22" r="19"/></svg><b id="timerNum"></b></div>') +
+                : '<span class="time-up" id="timeUp" hidden>Time is up · right answers now get 500</span>' +
+                  '<div class="timer" id="timer"><svg viewBox="0 0 44 44"><circle class="t-bg" cx="22" cy="22" r="19"/><circle class="t-fg" id="timerRing" cx="22" cy="22" r="19"/></svg><b id="timerNum"></b></div>') +
       '</div>';
 
     root.innerHTML =
@@ -493,14 +496,21 @@
   function updateTimer() {
     if (G.phase !== 'question' || !root) return;
     const q = G.questions[G.qi];
-    const left = Math.max(0, G.startedAt + q.limit * 1000 - Date.now());
+    const elapsed = Date.now() - G.startedAt;
+    const left = Math.max(0, q.limit * 1000 - elapsed);
     const num = root.querySelector('#timerNum');
     const ring = root.querySelector('#timerRing');
-    if (num) num.textContent = Math.ceil(left / 1000);
-    if (ring) ring.style.strokeDashoffset = String(119.4 * (1 - left / (q.limit * 1000)));
     const t = root.querySelector('#timer');
-    if (t) t.classList.toggle('low', left < 5000);
-    if (left <= 0) finishQuestion();
+    const up = root.querySelector('#timeUp');
+    // Counts down to zero, then counts the total time taken until the host ends the question.
+    if (num) num.textContent = left > 0 ? clock(Math.ceil(left / 1000)) : clock(Math.floor(elapsed / 1000));
+    if (ring) ring.style.strokeDashoffset = String(119.4 * (1 - left / (q.limit * 1000)));
+    if (t) { t.classList.toggle('low', left > 0 && left < 10000); t.classList.toggle('over', left <= 0); }
+    if (up) up.hidden = left > 0;
+  }
+
+  function clock(sec) {
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
   }
 
   function refreshCounts() {

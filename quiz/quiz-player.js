@@ -7,6 +7,8 @@
 
   let root = null, banner = null, net = null, cb = {}, me = null;
   let current = null;     // the question on screen
+  let open = false;       // a question is waiting for this player's answer
+  let away = false;       // the page is hidden or lost focus during a question
   let startedAt = 0, tick = null;
   const drafts = {};      // typed queries, kept if the question is sent again
 
@@ -21,6 +23,7 @@
 
   function show(html, cls) {
     clearInterval(tick);
+    open = false;
     root.className = 'p-screen ' + (cls || '');
     root.innerHTML = html;
   }
@@ -89,11 +92,21 @@
         '<button class="p-opt opt-' + i + '" data-i="' + i + '"><span class="shape s-' + SHAPES[i] + '"></span><span>' + esc(o) + '</span></button>').join('') + '</div>';
     }
     show(head + text + body, 'question');
+    open = true;
 
     if (m.type === 'sql') {
       const ta = root.querySelector('#pSql');
       ta.value = drafts[m.qi] || '';
-      ta.addEventListener('input', () => { drafts[m.qi] = ta.value; });
+      // No pasting: block the paste and drop events, and undo any input that
+      // adds a large chunk at once (some phone keyboards paste as typing).
+      const blockPaste = (e) => { e.preventDefault(); flag('paste'); };
+      ta.addEventListener('paste', blockPaste);
+      ta.addEventListener('drop', blockPaste);
+      ta.addEventListener('beforeinput', (e) => { if (/^insertFrom(Paste|Drop)/.test(e.inputType)) blockPaste(e); });
+      ta.addEventListener('input', () => {
+        if (ta.value.length - (drafts[m.qi] || '').length > 25) { ta.value = drafts[m.qi] || ''; flag('paste'); return; }
+        drafts[m.qi] = ta.value;
+      });
       root.querySelector('#pSubmit').addEventListener('click', () => {
         if (!ta.value.trim()) { ta.focus(); return; }
         answer(ta.value);
@@ -107,6 +120,46 @@
 
   // Counts down the time limit on a draining ring, then counts the total time
   // taken: the question stays open until the host ends it.
+  // ---------- Fair play ----------
+
+  function flag(kind) {
+    if (!net || !current) return;
+    if (kind === 'paste' && open) {
+      net.send({ t: 'flag', kind, qi: current.qi });
+      warn('Pasting is not allowed', 'Type your answer yourself. The host has been notified.');
+    } else if (kind === 'left' && open && !away) {
+      away = true;
+      net.send({ t: 'flag', kind, qi: current.qi });
+    } else if (kind === 'back' && away) {
+      away = false;
+      net.send({ t: 'flag', kind, qi: current.qi });
+      if (open) warn('You left the quiz page', 'Stay on this page until you answer. The host can see that you left.');
+    }
+  }
+
+  function warn(title, text) {
+    let w = document.getElementById('pWarn');
+    if (!w) {
+      w = document.createElement('div');
+      w.id = 'pWarn';
+      w.className = 'modal p-warn';
+      w.innerHTML = '<div class="modal-card"><svg class="icon"><use href="#i-alert"/></svg><h2></h2><p></p><button class="btn btn-primary btn-big">OK</button></div>';
+      w.querySelector('button').addEventListener('click', () => { w.hidden = true; });
+      document.body.appendChild(w);
+    }
+    w.querySelector('h2').textContent = title;
+    w.querySelector('p').textContent = text;
+    w.hidden = false;
+  }
+
+  document.addEventListener('visibilitychange', () => flag(document.hidden ? 'left' : 'back'));
+  global.addEventListener('blur', () => flag('left'));
+  global.addEventListener('focus', () => flag('back'));
+  // No copying the question text out of the page.
+  ['copy', 'cut', 'contextmenu'].forEach((type) => document.addEventListener(type, (e) => {
+    if (open && root.contains(e.target)) e.preventDefault();
+  }));
+
   function countdown() {
     const elapsed = Date.now() - startedAt;
     const limit = current.limit * 1000;

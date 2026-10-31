@@ -10,6 +10,7 @@
   const GAME_KEY = 'lecture-demos.quiz.game';
   const SHAPES = ['tri', 'dia', 'cir', 'sqr'];
   const TF = ['True', 'False'];
+  const UNDO = '<button class="btn" data-act="undo" title="Undo: reopen the question, the timer carries on (←)"><svg class="icon"><use href="#i-undo"/></svg>Reopen question</button>';
 
   let root = null;        // #scrHost
   let ui = {};            // callbacks into the app: status(state, text), toast(text)
@@ -108,6 +109,22 @@
   function onMessage(conn, msg) {
     if (msg.t === 'join') onJoin(conn, msg);
     else if (msg.t === 'answer') onAnswer(conn, msg);
+    else if (msg.t === 'flag') onFlag(conn, msg);
+  }
+
+  // Integrity reports from a phone: it left the quiz page, came back, or tried to paste.
+  function onFlag(conn, msg) {
+    const p = G.players[conn.cid];
+    if (!p) return;
+    if (msg.kind === 'back') { p.away = false; renderWatch(); return; }
+    if (G.phase !== 'question' || msg.qi !== G.qi || (msg.kind !== 'left' && msg.kind !== 'paste')) return;
+    p.flags = p.flags || {};
+    const f = p.flags[G.qi] || (p.flags[G.qi] = { left: 0, paste: 0 });
+    f[msg.kind]++;
+    if (msg.kind === 'left') p.away = true;
+    ui.toast(p.name + (msg.kind === 'left' ? ' left the quiz page' : ' tried to paste'));
+    saveGame();
+    renderWatch();
   }
 
   function reject(conn, reason) {
@@ -133,6 +150,7 @@
     conn.cid = cid;
     conns[cid] = conn;
     p.online = true;
+    p.away = false;
     net.send(conn, { t: 'joined', name: p.name, score: p.score });
     sendState(p);
     saveGame();
@@ -292,11 +310,26 @@
 
   function finishQuestion() {
     clearInterval(tick);
+    G.frozen = Date.now() - G.startedAt;   // where the timer stopped, for an undo
     G.phase = 'reveal';
     recompute();
     saveGame();
     sendResults();
     if (root) render();
+  }
+
+  // Undo an accidental "Show answer": the question opens again and its timer
+  // carries on from where it stopped. Players who were done stay done.
+  function reopenQuestion() {
+    if (G.phase !== 'reveal' && G.phase !== 'board') return;
+    G.phase = 'question';
+    G.startedAt = Date.now() - (G.frozen || 0);
+    saveGame();
+    online().forEach(sendState);
+    render();
+    clearInterval(tick);
+    tick = setInterval(updateTimer, 200);
+    ui.toast('Question ' + (G.qi + 1) + ' reopened');
   }
 
   function finishGame() {
@@ -346,6 +379,9 @@
       if (G.phase === 'final') return;
       e.preventDefault();
       primary();
+    } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+      e.preventDefault();
+      reopenQuestion();
     }
   }
 
@@ -460,6 +496,7 @@
 
     root.innerHTML =
       '<div class="q-view' + (q.type === 'sql' ? ' with-schema' : '') + '">' + head +
+        '<div class="watch" id="watch" hidden></div>' +
         '<div class="q-body"><div class="q-main">' +
           '<h2 class="q-text">' + esc(q.text) + '</h2>' +
           (q.code ? '<pre class="q-code">' + esc(q.code) + '</pre>' : '') +
@@ -467,9 +504,26 @@
         '</div>' + (q.type === 'sql' ? schemaHtml() : '') + '</div>' +
       '</div>' +
       (reveal
-        ? bar(q.type === 'sql' ? 'Click an answer group to mark it right or wrong' : '', 'Leaderboard')
+        ? bar(q.type === 'sql' ? 'Click an answer group to mark it right or wrong' : '', 'Leaderboard', UNDO)
         : bar('', 'Show answer'));
     if (!reveal) updateTimer();
+    renderWatch();
+  }
+
+  // Players who left the quiz page or tried to paste during this question.
+  function renderWatch() {
+    const w = root && root.querySelector('#watch');
+    if (!w) return;
+    const list = Object.values(G.players)
+      .map((p) => ({ p, f: (p.flags || {})[G.qi] }))
+      .filter((x) => x.f && (x.f.left || x.f.paste));
+    w.hidden = !list.length;
+    w.innerHTML = '<span class="watch-label"><svg class="icon"><use href="#i-eye"/></svg>Watch list</span>' + list.map(({ p, f }) =>
+      '<span class="watch-chip' + (p.away ? ' away' : '') + '"><b>' + esc(p.name) + '</b>' +
+        (f.left ? '<span>left page ' + f.left + '×</span>' : '') +
+        (f.paste ? '<span>pasted ' + f.paste + '×</span>' : '') +
+        (p.away ? '<em>away now</em>' : !p.online ? '<em>offline</em>' : '') +
+      '</span>').join('');
   }
 
   function sqlReveal(q, ps) {
@@ -520,6 +574,7 @@
     const of = root.querySelector('#ansOf');
     if (c) c.textContent = Object.values(G.players).filter(G.phase === 'question' ? done : (p) => p.answers[G.qi]).length;
     if (of) of.textContent = Object.keys(G.players).length;
+    renderWatch();
   }
 
   function ordinal(n) {
@@ -545,7 +600,7 @@
           '<span class="lb-gain">' + (p.gain ? '+' + p.gain : '') + '</span>' +
           '<b class="lb-score">' + p.score.toLocaleString() + '</b></li>';
       }).join('') : '<p class="muted">No players yet.</p>') + '</ol></div>' +
-      bar(now.length + (now.length === 1 ? ' player' : ' players'), last ? 'Final results' : 'Next question');
+      bar(now.length + (now.length === 1 ? ' player' : ' players'), last ? 'Final results' : 'Next question', UNDO);
   }
 
   function renderFinal() {
@@ -571,6 +626,7 @@
     if (t.dataset.act === 'primary') primary();
     else if (t.dataset.act === 'edit') ui.editQuestions();
     else if (t.dataset.act === 'new') newGame();
+    else if (t.dataset.act === 'undo') reopenQuestion();
     else if (t.dataset.kick) kick(t.dataset.kick);
     else if (t.dataset.norm != null) toggleGroup(t.dataset.norm);
   }

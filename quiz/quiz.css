@@ -327,10 +327,25 @@ textarea { font: inherit; color: inherit; }
 .rest b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rest em { font-style: normal; font-variant-numeric: tabular-nums; }
 
+/* Watch list: players who left the page or tried to paste. */
+.watch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: var(--bad-soft); }
+.watch-label { display: inline-flex; align-items: center; gap: 6px; color: var(--bad); font-weight: 750; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+.watch-chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 15px; }
+.watch-chip span { color: var(--ink-2); font-size: 13px; }
+.watch-chip em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); }
+.watch-chip.away { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
+.watch-chip.away em { color: var(--bad); }
+
 /* ---------- Player (phone) ---------- */
 
 .player { display: flex; flex-direction: column; }
 .p-banner { padding: 8px 14px; background: var(--warn-soft); color: var(--warn); font-weight: 650; font-size: 14px; text-align: center; }
+.p-screen.question { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.p-screen.question textarea { -webkit-user-select: text; user-select: text; }
+.p-warn .modal-card { width: min(360px, 100%); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.p-warn .modal-card > .icon { width: 48px; height: 48px; color: var(--bad); }
+.p-warn h2 { margin: 0; }
+.p-warn p { margin: 0 0 8px; color: var(--ink-2); }
 .p-screen { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 56px; max-width: 640px; width: 100%; margin: 0 auto; }
 .p-center { margin: auto 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
 .p-center h2 { margin: 6px 0 0; font-size: 26px; }

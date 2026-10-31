@@ -30,15 +30,19 @@
   function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ } }
   function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } }
 
-  // Version 2 gave every question one more minute; a list saved before that
-  // gets the extra minute once when it is loaded.
-  const Q_VERSION = 2;
+  // Changes to the built-in questions, applied once to a list saved before them:
+  // version 2 gave every question one more minute, version 3 gave the first
+  // question (SELECT * FROM customer) one minute.
+  const Q_VERSION = 3;
 
   function loadQuestions() {
     const q = load(Q_KEY);
     if (!Array.isArray(q) || !q.length) return D.cloneDefaults();
-    if ((load(Q_VER_KEY) || 1) < 2) {
-      q.forEach((x) => { x.limit = Math.min(600, (parseInt(x.limit, 10) || 20) + 60); });
+    const ver = load(Q_VER_KEY) || 1;
+    if (ver < Q_VERSION) {
+      if (ver < 2) q.forEach((x) => { x.limit = Math.min(600, (parseInt(x.limit, 10) || 20) + 60); });
+      const first = D.DEFAULT_QUESTIONS[0];
+      q.forEach((x) => { if (x.text === first.text) x.limit = first.limit; });
       store(Q_KEY, q);
       store(Q_VER_KEY, Q_VERSION);
     }

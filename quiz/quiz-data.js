@@ -17,7 +17,7 @@
   //        accepted forms (compared after normalising, {x} = any alias).
   const DEFAULT_QUESTIONS = [
     {
-      type: 'sql', topic: 'Basics', limit: 105,
+      type: 'sql', topic: 'Basics', limit: 60,
       text: 'Show every column and every row of the customer table.',
       model: 'SELECT * FROM customer;',
       answers: ['SELECT * FROM customer'],

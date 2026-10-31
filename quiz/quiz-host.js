@@ -452,7 +452,7 @@
     root.innerHTML =
       '<div class="lobby">' +
         '<div class="join-card">' +
-          '<p class="join-step">Join on your phone</p>' +
+          '<p class="join-step">Join on your phone or laptop</p>' +
           '<div class="qr" id="qr"></div>' +
           (isWeb ? '<p class="join-url">' + esc(url.replace(/^https?:\/\//, '').replace(/\?.*$/, '')) + '</p>'
                  : '<p class="join-url muted">Open this page from the website to get a link and QR code.</p>') +
@@ -503,7 +503,7 @@
     let body = '';
 
     if (q.type === 'sql') {
-      body = reveal ? sqlReveal(q, ps) : '<div class="sql-wait"><svg class="icon"><use href="#i-keyboard"/></svg>Write your query on your phone</div>';
+      body = reveal ? sqlReveal(q, ps) : '<div class="sql-wait"><svg class="icon"><use href="#i-keyboard"/></svg>Write your query on your device</div>';
     } else {
       const opts = optionsOf(q);
       const counts = opts.map((_, i) => answers.filter((a) => a.value === i).length);

@@ -332,6 +332,18 @@
     ui.toast('Question ' + (G.qi + 1) + ' reopened');
   }
 
+  // Gives the running question more time: the limit grows, so the full-points
+  // window is longer for everyone (also when the time had already run out).
+  function extendTime(sec) {
+    if (G.phase !== 'question') return;
+    const q = G.questions[G.qi];
+    q.limit = Math.min(3600, q.limit + sec);
+    saveGame();
+    online().forEach((p) => send(p, { t: 'extend', qi: G.qi, limit: q.limit, elapsed: Date.now() - G.startedAt }));
+    updateTimer();
+    ui.toast('+1 minute · ' + clock(Math.max(0, Math.ceil((q.limit * 1000 - (Date.now() - G.startedAt)) / 1000))) + ' left');
+  }
+
   function finishGame() {
     G.phase = 'final';
     saveGame();
@@ -379,6 +391,8 @@
       if (G.phase === 'final') return;
       e.preventDefault();
       primary();
+    } else if (e.key === '+' || e.key === '=') {
+      extendTime(60);
     } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
       e.preventDefault();
       reopenQuestion();
@@ -491,6 +505,7 @@
           (q.type === 'sql' && !reveal ? 'solved' : 'answered') + '</span>' +
         (reveal ? '<span class="q-right">' + nRight + ' correct</span>'
                 : '<span class="time-up" id="timeUp" hidden>Time is up · right answers now get 500</span>' +
+                  '<button class="btn btn-extend" data-act="extend" title="Add one minute to this question (+)">+1 min</button>' +
                   '<div class="timer" id="timer"><svg viewBox="0 0 44 44"><circle class="t-bg" cx="22" cy="22" r="19"/><circle class="t-fg" id="timerRing" cx="22" cy="22" r="19"/></svg><b id="timerNum"></b></div>') +
       '</div>';
 
@@ -627,6 +642,7 @@
     else if (t.dataset.act === 'edit') ui.editQuestions();
     else if (t.dataset.act === 'new') newGame();
     else if (t.dataset.act === 'undo') reopenQuestion();
+    else if (t.dataset.act === 'extend') extendTime(60);
     else if (t.dataset.kick) kick(t.dataset.kick);
     else if (t.dataset.norm != null) toggleGroup(t.dataset.norm);
   }

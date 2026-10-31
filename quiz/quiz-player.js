@@ -59,6 +59,9 @@
       case 'question': question(msg); break;
       case 'locked': locked(msg.correct); break;
       case 'tryagain': tryAgain(msg); break;
+      case 'extend':
+        if (current && current.qi === msg.qi) { current.limit = msg.limit; startedAt = Date.now() - msg.elapsed; if (open) countdown(); }
+        break;
       case 'result': result(msg); break;
       case 'final': final(msg); break;
     }

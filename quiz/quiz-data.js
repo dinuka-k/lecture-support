@@ -17,18 +17,18 @@
   //        accepted forms (compared after normalising, {x} = any alias).
   const DEFAULT_QUESTIONS = [
     {
-      type: 'sql', topic: 'Basics', limit: 240,
+      type: 'sql', topic: 'Basics', limit: 180,
       text: 'Show every column and every row of the customer table.',
       model: 'SELECT * FROM customer;',
       answers: ['SELECT * FROM customer'],
     },
     {
-      type: 'mcq', topic: 'Basics', limit: 240,
+      type: 'mcq', topic: 'Basics', limit: 180,
       text: 'Which clause keeps only the rows that match a condition?',
       options: ['ORDER BY', 'WHERE', 'GROUP BY', 'FROM'], correct: 1,
     },
     {
-      type: 'sql', topic: 'Basics', limit: 240,
+      type: 'sql', topic: 'Basics', limit: 180,
       text: 'List the names of the customers who live in Colombo.',
       model: "SELECT name FROM customer WHERE city = 'Colombo';",
       answers: [
@@ -38,13 +38,13 @@
       ],
     },
     {
-      type: 'sql', topic: 'Sorting', limit: 240,
+      type: 'sql', topic: 'Sorting', limit: 180,
       text: 'List all products, the most expensive first.',
       model: 'SELECT * FROM product ORDER BY price DESC;',
       answers: ['SELECT * FROM product ORDER BY price DESC'],
     },
     {
-      type: 'mcq', topic: 'Aggregates', limit: 240,
+      type: 'mcq', topic: 'Aggregates', limit: 180,
       text: 'This query returns two different numbers. Why?',
       code: 'SELECT COUNT(*), COUNT(email)\nFROM customer;',
       options: [
@@ -56,7 +56,7 @@
       correct: 0,
     },
     {
-      type: 'sql', topic: 'Aggregates', limit: 240,
+      type: 'sql', topic: 'Aggregates', limit: 180,
       text: 'Show each city together with the number of customers in it.',
       model: 'SELECT city, COUNT(*) FROM customer GROUP BY city;',
       answers: [
@@ -69,17 +69,17 @@
       ],
     },
     {
-      type: 'mcq', topic: 'Aggregates', limit: 240,
+      type: 'mcq', topic: 'Aggregates', limit: 180,
       text: 'Which clause keeps only the groups you want after GROUP BY, e.g. cities with more than 10 customers?',
       options: ['WHERE', 'HAVING', 'ORDER BY', 'LIMIT'], correct: 1,
     },
     {
-      type: 'tf', topic: 'Keys', limit: 240,
+      type: 'tf', topic: 'Keys', limit: 180,
       text: 'A primary key column may contain NULL values.',
       correct: 1,
     },
     {
-      type: 'mcq', topic: 'Joins', limit: 240,
+      type: 'mcq', topic: 'Joins', limit: 180,
       text: 'customer INNER JOIN orders ON the customer_id. Which customers appear in the result?',
       options: [
         'Every customer',
@@ -90,7 +90,7 @@
       correct: 1,
     },
     {
-      type: 'sql', topic: 'Joins', limit: 240,
+      type: 'sql', topic: 'Joins', limit: 180,
       text: 'Show each order_id together with the name of the customer who placed it.',
       model: 'SELECT o.order_id, c.name\nFROM orders o\nJOIN customer c ON o.customer_id = c.customer_id;',
       answers: [
@@ -105,13 +105,13 @@
       ],
     },
     {
-      type: 'mcq', topic: 'Joins', limit: 240,
+      type: 'mcq', topic: 'Joins', limit: 180,
       text: 'You need every customer, including those who never placed an order. Which join?',
       options: ['customer INNER JOIN orders', 'customer LEFT JOIN orders', 'customer CROSS JOIN orders', 'customer RIGHT JOIN orders'],
       correct: 1,
     },
     {
-      type: 'sql', topic: 'Joins', limit: 240,
+      type: 'sql', topic: 'Joins', limit: 180,
       text: 'List the names of the customers who have never placed an order.',
       model: 'SELECT c.name\nFROM customer c\nLEFT JOIN orders o ON c.customer_id = o.customer_id\nWHERE o.order_id IS NULL;',
       answers: [
@@ -125,25 +125,25 @@
       ],
     },
     {
-      type: 'mcq', topic: 'Normalization', limit: 240,
+      type: 'mcq', topic: 'Normalization', limit: 180,
       text: 'Which normal form does this table break?',
       code: "student(id, name, phones)\n\n1 | Nimal | '0771234567, 0719876543'",
       options: ['1NF', '2NF', '3NF', 'It is fine'], correct: 0,
     },
     {
-      type: 'mcq', topic: 'Normalization', limit: 240,
+      type: 'mcq', topic: 'Normalization', limit: 180,
       text: 'student_name depends only on student_id. Which normal form is broken?',
       code: 'enrolment(student_id, course_id, student_name, grade)\nkey = (student_id, course_id)',
       options: ['1NF', '2NF', '3NF', 'None'], correct: 1,
     },
     {
-      type: 'mcq', topic: 'Normalization', limit: 240,
+      type: 'mcq', topic: 'Normalization', limit: 180,
       text: 'dept_name depends on dept_id, which depends on the key emp_id. Which normal form is broken?',
       code: 'employee(emp_id, dept_id, dept_name)\nemp_id → dept_id → dept_name',
       options: ['1NF', '2NF', '3NF', 'It is fine'], correct: 2,
     },
     {
-      type: 'mcq', topic: 'Indexing', limit: 240,
+      type: 'mcq', topic: 'Indexing', limit: 180,
       text: 'Which query gets the biggest speed-up from an index on customer(city)?',
       options: [
         "SELECT * FROM customer WHERE city = 'Kandy'",
@@ -154,13 +154,13 @@
       correct: 0,
     },
     {
-      type: 'sql', topic: 'Indexing', limit: 240,
+      type: 'sql', topic: 'Indexing', limit: 180,
       text: 'Create an index on the city column of the customer table (any index name).',
       model: 'CREATE INDEX idx_customer_city ON customer(city);',
       answers: ['CREATE INDEX {i} ON customer (city)'],
     },
     {
-      type: 'mcq', topic: 'Recursive CTE', limit: 240,
+      type: 'mcq', topic: 'Recursive CTE', limit: 180,
       text: 'What does this query return?',
       code: 'WITH RECURSIVE chain AS (\n  SELECT emp_id, name, manager_id\n  FROM employee WHERE emp_id = 5\n  UNION ALL\n  SELECT e.emp_id, e.name, e.manager_id\n  FROM employee e\n  JOIN chain c ON e.emp_id = c.manager_id\n)\nSELECT name FROM chain;',
       options: [
@@ -172,7 +172,7 @@
       correct: 0,
     },
     {
-      type: 'mcq', topic: 'Window functions', limit: 240,
+      type: 'mcq', topic: 'Window functions', limit: 180,
       text: 'Which expression ranks employees by salary within each department?',
       options: [
         'RANK() OVER (PARTITION BY dept ORDER BY salary DESC)',
@@ -183,7 +183,7 @@
       correct: 0,
     },
     {
-      type: 'mcq', topic: 'Window functions', limit: 240,
+      type: 'mcq', topic: 'Window functions', limit: 180,
       text: 'employee has 12 rows in 3 departments. How many rows does this query return?',
       code: 'SELECT name, dept, salary,\n       AVG(salary) OVER (PARTITION BY dept) AS dept_avg\nFROM employee;',
       options: ['3', '12', '36', '1'], correct: 1,

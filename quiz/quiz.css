@@ -211,6 +211,7 @@ textarea { font: inherit; color: inherit; }
 .timer.low b, .p-timer.low b { color: var(--bad); }
 .timer.over b, .p-timer.over b { color: var(--warn); }
 .timer.over .t-bg, .p-timer.over .t-bg { stroke: var(--warn-soft); }
+.btn-extend { height: 32px; padding: 0 12px; font-size: 14px; }
 .time-up { padding: 4px 12px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 700; }
 
 .q-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-height: 0; }

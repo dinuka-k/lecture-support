@@ -196,9 +196,9 @@
 
   // ---------- SQL answer checking ----------
 
-  // Puts a query in a canonical form so that spacing, letter case, a trailing
-  // semicolon, AS, ASC, INNER / OUTER and != vs <> don't matter. String
-  // literals keep their case ('Colombo' is not 'colombo' in most databases).
+  // Puts a query in a canonical form so that spacing, letter case (also inside
+  // quotes), a trailing semicolon, AS, ASC, INNER / OUTER, != vs <> and a
+  // plural s on a name (products, customers) don't matter.
   function normSql(input) {
     const s = String(input || '').replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
     const parts = s.split(/('(?:[^']|'')*'?|"[^"]*"?)/);
@@ -206,12 +206,13 @@
     for (let i = 0; i < parts.length; i++) {
       const p = parts[i];
       if (i % 2) {
-        out += p[0] === '"' ? "'" + p.slice(1).replace(/"$/, '') + "'" : p;
+        out += (p[0] === '"' ? "'" + p.slice(1).replace(/"$/, '') + "'" : p).toLowerCase();
         continue;
       }
       out += p.toLowerCase()
         .replace(/--[^\n]*/g, ' ')
         .replace(/\b(as|asc|inner|outer)\b/g, ' ')
+        .replace(/\b([a-z_][a-z0-9_]*?)s\b/g, '$1')
         .replace(/!=/g, '<>')
         .replace(/\s+/g, ' ')
         .replace(/\s*([(),;=<>*+\-/.])\s*/g, '$1');

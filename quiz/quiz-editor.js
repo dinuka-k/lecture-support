@@ -46,7 +46,7 @@
       specific =
         '<label class="ed-field"><span>Model answer <small>shown to everyone on the reveal</small></span>' +
           '<textarea class="input mono" data-k="model" rows="3" spellcheck="false">' + esc(q.model) + '</textarea></label>' +
-        '<label class="ed-field"><span>Accepted answers <small>one per line; case, spacing, AS, ASC, INNER and the final ; are ignored; {x} matches any alias. Empty = the model answer only. You can also accept answers by hand during the reveal.</small></span>' +
+        '<label class="ed-field"><span>Accepted answers <small>one per line; case, spacing, a plural s, AS, ASC, INNER and the final ; are ignored; {x} matches any alias. Empty = the model answer only. You can also accept answers by hand during the reveal.</small></span>' +
           '<textarea class="input mono" data-k="answers" rows="5" spellcheck="false">' + esc((q.answers || []).join('\n')) + '</textarea></label>';
     }
     form.innerHTML =

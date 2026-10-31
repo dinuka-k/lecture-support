@@ -139,11 +139,19 @@
     refreshCounts();
   }
 
+  // A player is done with the question: any choice, or a query that was accepted.
+  // A wrong query can be edited and sent again until the time runs out.
+  function done(p) {
+    const a = p.answers[G.qi];
+    return !!a && (G.questions[G.qi].type !== 'sql' || a.auto);
+  }
+
   function onAnswer(conn, msg) {
     const p = G.players[conn.cid];
-    if (!p || G.phase !== 'question' || msg.qi !== G.qi || p.answers[G.qi]) return;
+    if (!p || G.phase !== 'question' || msg.qi !== G.qi || done(p)) return;
     const q = G.questions[G.qi];
-    const a = { ms: Date.now() - G.startedAt };
+    const prev = p.answers[G.qi];
+    const a = { ms: Date.now() - G.startedAt, tries: (prev ? prev.tries : 0) + 1 };
     if (q.type === 'sql') {
       a.value = String(msg.value || '').slice(0, 2000);
       a.norm = D.normSql(a.value);
@@ -153,11 +161,12 @@
       a.auto = a.value === q.correct;
     }
     p.answers[G.qi] = a;
-    send(p, { t: 'locked', qi: G.qi });
+    if (q.type === 'sql' && !a.auto) send(p, { t: 'tryagain', qi: G.qi, tries: a.tries });
+    else send(p, { t: 'locked', qi: G.qi, correct: q.type === 'sql' });
     saveGame();
     refreshCounts();
     const on = online();
-    if (on.length && on.every((o) => o.answers[G.qi])) setTimeout(() => { if (G.phase === 'question') finishQuestion(); }, 600);
+    if (on.length && on.every(done)) setTimeout(() => { if (G.phase === 'question') finishQuestion(); }, 600);
   }
 
   // ---------- Scoring ----------
@@ -238,7 +247,10 @@
   function sendState(p) {
     switch (G.phase) {
       case 'lobby': send(p, { t: 'lobby' }); break;
-      case 'question': send(p, p.answers[G.qi] ? { t: 'locked', qi: G.qi } : questionMsg()); break;
+      case 'question':
+        if (done(p)) send(p, { t: 'locked', qi: G.qi, correct: G.questions[G.qi].type === 'sql' });
+        else send(p, Object.assign(questionMsg(), { retry: !!p.answers[G.qi] }));
+        break;
       case 'reveal': case 'board': send(p, resultFor(p, rankMap())); break;
       case 'final': send(p, finalFor(p, rankMap())); break;
     }
@@ -437,7 +449,8 @@
         '<span class="q-num">Question ' + (G.qi + 1) + ' <small>of ' + G.questions.length + '</small></span>' +
         (q.topic ? '<span class="q-topic">' + esc(q.topic) + '</span>' : '') +
         '<span class="q-type">' + (q.type === 'sql' ? 'Write a query' : q.type === 'tf' ? 'True or false' : 'Multiple choice') + '</span>' +
-        '<span class="q-answers"><b id="ansCount">' + answers.length + '</b> / <span id="ansOf">' + ps.length + '</span> answered</span>' +
+        '<span class="q-answers"><b id="ansCount">' + (reveal ? answers.length : ps.filter(done).length) + '</b> / <span id="ansOf">' + ps.length + '</span> ' +
+          (q.type === 'sql' && !reveal ? 'solved' : 'answered') + '</span>' +
         (reveal ? '<span class="q-right">' + nRight + ' correct</span>'
                 : '<div class="timer" id="timer"><svg viewBox="0 0 44 44"><circle class="t-bg" cx="22" cy="22" r="19"/><circle class="t-fg" id="timerRing" cx="22" cy="22" r="19"/></svg><b id="timerNum"></b></div>') +
       '</div>';
@@ -495,7 +508,7 @@
     if (G.phase === 'lobby') return renderLobbyPlayers();
     const c = root.querySelector('#ansCount');
     const of = root.querySelector('#ansOf');
-    if (c) c.textContent = Object.values(G.players).filter((p) => p.answers[G.qi]).length;
+    if (c) c.textContent = Object.values(G.players).filter(G.phase === 'question' ? done : (p) => p.answers[G.qi]).length;
     if (of) of.textContent = Object.keys(G.players).length;
   }
 

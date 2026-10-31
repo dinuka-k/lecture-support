@@ -54,7 +54,8 @@
       case 'kicked': exit('The host removed you from this game.'); break;
       case 'lobby': lobby(msg.reset); break;
       case 'question': question(msg); break;
-      case 'locked': locked(); break;
+      case 'locked': locked(msg.correct); break;
+      case 'tryagain': tryAgain(msg); break;
       case 'result': result(msg); break;
       case 'final': final(msg); break;
     }
@@ -78,6 +79,7 @@
     if (m.type === 'sql') {
       body = '<details class="p-schema"><summary>Tables</summary>' + (m.schema || []).map((t) =>
           '<div><b>' + esc(t.table) + '</b>(' + t.cols.map(esc).join(', ') + ')</div>').join('') + '</details>' +
+        '<p class="p-wrong" id="pWrong"' + (m.retry ? '' : ' hidden') + '>Not correct yet. Edit your query and submit again.</p>' +
         '<textarea id="pSql" class="p-sql" rows="6" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="SELECT ..."></textarea>' +
         '<button class="btn btn-primary p-submit" id="pSubmit">Submit query</button>';
     } else {
@@ -114,11 +116,34 @@
   function answer(value) {
     if (!current) return;
     net.send({ t: 'answer', qi: current.qi, value });
-    locked();
+    if (current.type !== 'sql') { locked(); return; }
+    // The host checks the query and replies with locked (right) or tryagain (wrong).
+    const btn = root.querySelector('#pSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Checking';
+    root.querySelector('#pSql').readOnly = true;
   }
 
-  function locked() {
-    show('<div class="p-center"><div class="spinner"></div><h2>Answer sent</h2><p class="muted">Waiting for the others</p></div>', 'locked');
+  function tryAgain(m) {
+    if (!current || current.qi !== m.qi || !root.querySelector('#pSql')) return;
+    const ta = root.querySelector('#pSql');
+    const btn = root.querySelector('#pSubmit');
+    const note = root.querySelector('#pWrong');
+    ta.readOnly = false;
+    btn.textContent = 'Submit again';
+    btn.disabled = deadline <= Date.now();
+    note.textContent = 'Not correct yet (attempt ' + m.tries + '). Edit your query and submit again.';
+    note.hidden = false;
+    note.classList.remove('shake');
+    void note.offsetWidth;
+    note.classList.add('shake');
+    ta.focus();
+  }
+
+  function locked(correctQuery) {
+    show(correctQuery
+      ? '<div class="p-center"><div class="p-badge"><svg class="icon"><use href="#i-check"/></svg></div><h2>Correct!</h2><p class="muted">Waiting for the others</p></div>'
+      : '<div class="p-center"><div class="spinner"></div><h2>Answer sent</h2><p class="muted">Waiting for the others</p></div>', 'locked');
   }
 
   function result(m) {

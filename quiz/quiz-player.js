@@ -9,6 +9,7 @@
   let current = null;     // the question on screen
   let open = false;       // a question is waiting for this player's answer
   let away = false;       // the page is hidden or lost focus during a question
+  let strike = null;      // the host's latest count of leaves: { leaves, penalty }
   let startedAt = 0, tick = null;
   const drafts = {};      // typed queries, kept if the question is sent again
 
@@ -59,6 +60,12 @@
       case 'question': question(msg); break;
       case 'locked': locked(msg.correct); break;
       case 'tryagain': tryAgain(msg); break;
+      case 'strike':
+        strike = msg;
+        cb.onScore(me.name, msg.score);
+        if (!away) leftWarning();   // the reply came after the player was back
+        break;
+      case 'dq': disqualified(msg); break;
       case 'extend':
         if (current && current.qi === msg.qi) { current.limit = msg.limit; startedAt = Date.now() - msg.elapsed; if (open) countdown(); }
         break;
@@ -136,8 +143,25 @@
     } else if (kind === 'back' && away) {
       away = false;
       net.send({ t: 'flag', kind, qi: current.qi });
-      if (open) warn('You left the quiz page', 'Stay on this page until you answer. The host can see that you left.');
+      if (open) leftWarning();
     }
+  }
+
+  function leftWarning() {
+    const n = strike ? strike.leaves : 1;
+    let text;
+    if (n <= 3) text = 'Stay on this page until you answer. The host can see that you left. Leaving more than 3 times costs points (' + n + ' so far).';
+    else text = 'You lost 250 points (' + strike.penalty + ' in total). Leaving more than 5 times disqualifies you (' + n + ' so far).';
+    warn('You left the quiz page', text);
+  }
+
+  function disqualified(m) {
+    away = false;
+    cb.onScore(me.name, 0);
+    show('<div class="p-center"><div class="p-verdict bad"><svg class="icon"><use href="#i-x"/></svg><h2>Disqualified</h2></div>' +
+      '<p class="muted">You left the quiz page ' + m.leaves + ' times. The limit is 5.</p></div>', 'result bad');
+    const w = document.getElementById('pWarn');
+    if (w) w.hidden = true;
   }
 
   function warn(title, text) {

@@ -11,6 +11,9 @@
   const Q_VER_KEY = 'lecture-demos.quiz.questionsVersion';
   const SHAPES = ['tri', 'dia', 'cir', 'sqr'];
   const TF = ['True', 'False'];
+  // Leaving the quiz page during questions, counted over the whole game:
+  // each leave after FREE_LEAVES costs PENALTY points; more than MAX_LEAVES disqualifies.
+  const FREE_LEAVES = 3, MAX_LEAVES = 5, PENALTY = 250;
   const UNDO = '<button class="btn" data-act="undo" title="Undo: reopen the question, the timer carries on (←)"><svg class="icon"><use href="#i-undo"/></svg>Reopen question</button>';
 
   let root = null;        // #scrHost
@@ -143,11 +146,29 @@
     p.flags = p.flags || {};
     const f = p.flags[G.qi] || (p.flags[G.qi] = { left: 0, paste: 0 });
     f[msg.kind]++;
-    if (msg.kind === 'left') { p.away = true; p.awaySince = Date.now(); }
-    ui.toast(p.name + (msg.kind === 'left' ? ' left the quiz page' : ' tried to paste'));
+    if (msg.kind === 'paste') ui.toast(p.name + ' tried to paste');
+    else {
+      p.away = true;
+      p.awaySince = Date.now();
+      const n = leaves(p);
+      recompute();
+      send(p, { t: 'strike', leaves: n, penalty: p.penalty, score: p.score - p.gain });
+      if (p.dq) { send(p, { t: 'dq', leaves: n }); ui.toast(p.name + ' is disqualified: left the quiz page ' + n + ' times'); }
+      else ui.toast(p.name + ' left the quiz page (' + n + '×' + (n > FREE_LEAVES ? ', −' + PENALTY + ' points' : '') + ')');
+      refreshCounts();
+      const on = online();
+      if (on.length && on.every((o) => o.dq || done(o))) setTimeout(() => { if (G.phase === 'question') finishQuestion(); }, 600);
+    }
     saveGame();
     renderWatch();
   }
+
+  function leaves(p, before) {
+    let n = 0;
+    Object.keys(p.flags || {}).forEach((qi) => { if (before == null || +qi < before) n += p.flags[qi].left || 0; });
+    return n;
+  }
+  function penaltyFor(n) { return Math.max(0, Math.min(n, MAX_LEAVES) - FREE_LEAVES) * PENALTY; }
 
   function reject(conn, reason) {
     net.send(conn, { t: 'reject', reason });
@@ -189,7 +210,7 @@
 
   function onAnswer(conn, msg) {
     const p = G.players[conn.cid];
-    if (!p || G.phase !== 'question' || msg.qi !== G.qi || done(p)) return;
+    if (!p || p.dq || G.phase !== 'question' || msg.qi !== G.qi || done(p)) return;
     const q = G.questions[G.qi];
     const prev = p.answers[G.qi];
     const a = { ms: Date.now() - G.startedAt, tries: (prev ? prev.tries : 0) + 1 };
@@ -207,7 +228,7 @@
     saveGame();
     refreshCounts();
     const on = online();
-    if (on.length && on.every(done)) setTimeout(() => { if (G.phase === 'question') finishQuestion(); }, 600);
+    if (on.length && on.every((o) => o.dq || done(o))) setTimeout(() => { if (G.phase === 'question') finishQuestion(); }, 600);
   }
 
   // ---------- Scoring ----------
@@ -233,14 +254,18 @@
     Object.values(G.players).forEach((p) => {
       let prev = 0;
       for (let i = 0; i < G.qi; i++) prev += points(p.answers[i], i);
-      p.prev = prev;
+      const n = leaves(p);
+      p.dq = n > MAX_LEAVES;
+      p.penalty = penaltyFor(n);
+      p.prev = Math.max(0, prev - penaltyFor(leaves(p, G.qi)));
       p.gain = G.qi >= 0 ? points(p.answers[G.qi], G.qi) : 0;
-      p.score = prev + p.gain;
+      p.score = p.dq ? 0 : Math.max(0, prev + p.gain - p.penalty);
     });
   }
 
+  // Disqualified players are left out of the ranking.
   function ranking(key) {
-    return Object.values(G.players).sort((a, b) => (b[key || 'score'] - a[key || 'score']) || a.name.localeCompare(b.name));
+    return Object.values(G.players).filter((p) => !p.dq).sort((a, b) => (b[key || 'score'] - a[key || 'score']) || a.name.localeCompare(b.name));
   }
 
   function correctText(q) {
@@ -253,7 +278,7 @@
     const a = p.answers[G.qi];
     return {
       t: 'result', qi: G.qi, answered: !!a, correct: isCorrect(a, G.qi), gain: p.gain, score: p.score,
-      rank: rankMap[p.cid], players: Object.keys(G.players).length,
+      rank: rankMap[p.cid], players: ranking().length, penalty: p.penalty || 0,
       correctText: correctText(q), sql: q.type === 'sql',
     };
   }
@@ -266,12 +291,12 @@
 
   function sendResults() {
     const m = rankMap();
-    online().forEach((p) => send(p, resultFor(p, m)));
+    online().forEach((p) => (p.dq ? sendState(p) : send(p, resultFor(p, m))));
   }
 
   function finalFor(p, m) {
     return {
-      t: 'final', rank: m[p.cid], score: p.score, players: Object.keys(G.players).length,
+      t: 'final', rank: m[p.cid], score: p.score, players: ranking().length,
       top: ranking().slice(0, 3).map((o) => ({ name: o.name, score: o.score })),
     };
   }
@@ -287,6 +312,7 @@
   }
 
   function sendState(p) {
+    if (p.dq && G.phase !== 'lobby') { send(p, { t: 'dq', leaves: leaves(p) }); return; }
     switch (G.phase) {
       case 'lobby': send(p, { t: 'lobby' }); break;
       case 'question':
@@ -370,7 +396,7 @@
     G.phase = 'final';
     saveGame();
     const m = rankMap();
-    online().forEach((p) => send(p, finalFor(p, m)));
+    online().forEach((p) => (p.dq ? sendState(p) : send(p, finalFor(p, m))));
     render();
   }
 
@@ -560,8 +586,15 @@
         (f.left ? '<span>left page ' + f.left + '×</span>' : '') +
         (f.paste ? '<span>pasted ' + f.paste + '×</span>' : '') +
         (f.awayMs ? '<span>away ' + clock(Math.round(f.awayMs / 1000)) + '</span>' : '') +
-        (p.away ? '<em>away now</em>' : !p.online ? '<em>offline</em>' : f.back ? '<em class="back">back</em>' : '') +
+        (p.dq ? '' : p.away ? '<em>away now</em>' : !p.online ? '<em>offline</em>' : f.back ? '<em class="back">back</em>' : '') +
+        (p.dq ? '<em class="dq">disqualified</em>' : leaves(p) ? '<span class="watch-total">' + leaves(p) + ' of ' + MAX_LEAVES + ' leaves' + (p.penalty ? ' · −' + p.penalty : '') + '</span>' : '') +
       '</span>').join('');
+  }
+
+  // A line under the leaderboard and the final results naming disqualified players.
+  function dqLine() {
+    const out = Object.values(G.players).filter((p) => p.dq);
+    return out.length ? '<p class="dq-line"><b>Disqualified</b> (left the quiz page more than ' + MAX_LEAVES + ' times): ' + out.map((p) => esc(p.name)).join(', ') + '</p>' : '';
   }
 
   function sqlReveal(q, ps) {
@@ -633,11 +666,12 @@
         const moved = before[p.cid] - i;
         return '<li style="--i:' + i + '">' +
           '<span class="lb-rank">' + (i + 1) + '</span>' +
-          '<span class="lb-name">' + esc(p.name) + (moved > 0 ? '<span class="lb-up">▲ ' + moved + '</span>' : '') + '</span>' +
+          '<span class="lb-name">' + esc(p.name) + (moved > 0 ? '<span class="lb-up">▲ ' + moved + '</span>' : '') +
+            (p.penalty ? '<span class="lb-pen" title="Points lost for leaving the quiz page">−' + p.penalty + '</span>' : '') + '</span>' +
           '<span class="lb-bar"><i style="--w:' + (p.score / max) + '"></i></span>' +
           '<span class="lb-gain">' + (p.gain ? '+' + p.gain : '') + '</span>' +
           '<b class="lb-score">' + p.score.toLocaleString() + '</b></li>';
-      }).join('') : '<p class="muted">No players yet.</p>') + '</ol></div>' +
+      }).join('') : '<p class="muted">Nobody on the leaderboard yet.</p>') + '</ol>' + dqLine() + '</div>' +
       bar(now.length + (now.length === 1 ? ' player' : ' players'), last ? 'Final results' : 'Next question', UNDO);
   }
 
@@ -651,6 +685,7 @@
         '<div class="podium">' + slot(r[1], 2) + slot(r[0], 1) + slot(r[2], 3) + '</div>' +
         (r.length > 3 ? '<ol class="rest" start="4">' + r.slice(3, 15).map((p, i) =>
           '<li><span>' + ordinal(i + 4) + '</span><b>' + esc(p.name) + '</b><em>' + p.score.toLocaleString() + '</em></li>').join('') + '</ol>' : '') +
+        dqLine() +
       '</div>' +
       bar(r.length + (r.length === 1 ? ' player' : ' players') + ' · ' + G.questions.length + ' questions', '',
         '<button class="btn btn-primary btn-big" data-act="new"><svg class="icon"><use href="#i-restart"/></svg>New game</button>');

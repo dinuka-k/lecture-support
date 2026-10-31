@@ -336,6 +336,9 @@ textarea { font: inherit; color: inherit; }
 .watch-chip em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); }
 .watch-chip.away { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
 .watch-chip.away em { color: var(--bad); }
+.watch-chip em.back { padding: 1px 8px; border-radius: 999px; background: var(--good-soft); color: var(--good); }
+.watch-chip.returned { animation: flash 1.2s ease-out; }
+@keyframes flash { 0% { box-shadow: 0 0 0 4px var(--good); } 100% { box-shadow: 0 0 0 0 transparent; } }
 
 /* ---------- Player (phone) ---------- */
 

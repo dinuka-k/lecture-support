@@ -127,12 +127,23 @@
   function onFlag(conn, msg) {
     const p = G.players[conn.cid];
     if (!p) return;
-    if (msg.kind === 'back') { p.away = false; renderWatch(); return; }
+    if (msg.kind === 'back') {
+      if (!p.away) return;
+      const f = (p.flags || {})[G.qi];
+      const ms = p.awaySince ? Date.now() - p.awaySince : 0;
+      p.away = false;
+      p.backAt = Date.now();
+      if (f && G.phase === 'question') { f.awayMs = (f.awayMs || 0) + ms; f.back = true; }
+      ui.toast(p.name + ' is back on the quiz page (away ' + clock(Math.round(ms / 1000)) + ')');
+      saveGame();
+      renderWatch();
+      return;
+    }
     if (G.phase !== 'question' || msg.qi !== G.qi || (msg.kind !== 'left' && msg.kind !== 'paste')) return;
     p.flags = p.flags || {};
     const f = p.flags[G.qi] || (p.flags[G.qi] = { left: 0, paste: 0 });
     f[msg.kind]++;
-    if (msg.kind === 'left') p.away = true;
+    if (msg.kind === 'left') { p.away = true; p.awaySince = Date.now(); }
     ui.toast(p.name + (msg.kind === 'left' ? ' left the quiz page' : ' tried to paste'));
     saveGame();
     renderWatch();
@@ -545,10 +556,11 @@
       .filter((x) => x.f && (x.f.left || x.f.paste));
     w.hidden = !list.length;
     w.innerHTML = '<span class="watch-label"><svg class="icon"><use href="#i-eye"/></svg>Watch list</span>' + list.map(({ p, f }) =>
-      '<span class="watch-chip' + (p.away ? ' away' : '') + '"><b>' + esc(p.name) + '</b>' +
+      '<span class="watch-chip' + (p.away ? ' away' : Date.now() - (p.backAt || 0) < 1500 ? ' returned' : '') + '"><b>' + esc(p.name) + '</b>' +
         (f.left ? '<span>left page ' + f.left + '×</span>' : '') +
         (f.paste ? '<span>pasted ' + f.paste + '×</span>' : '') +
-        (p.away ? '<em>away now</em>' : !p.online ? '<em>offline</em>' : '') +
+        (f.awayMs ? '<span>away ' + clock(Math.round(f.awayMs / 1000)) + '</span>' : '') +
+        (p.away ? '<em>away now</em>' : !p.online ? '<em>offline</em>' : f.back ? '<em class="back">back</em>' : '') +
       '</span>').join('');
   }
 

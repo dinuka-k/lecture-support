@@ -27,11 +27,6 @@
       answers: ['SELECT * FROM customer'],
     },
     {
-      type: 'mcq', topic: 'Basics', limit: 80,
-      text: 'Which clause keeps only the rows that match a condition?',
-      options: ['ORDER BY', 'WHERE', 'GROUP BY', 'FROM'], correct: 1,
-    },
-    {
       type: 'sql', topic: 'Basics', limit: 120,
       text: 'List the names of the customers who live in Colombo.',
       model: "SELECT name FROM customer WHERE city = 'Colombo';",
@@ -48,18 +43,6 @@
       answers: ['SELECT * FROM product ORDER BY price DESC'],
     },
     {
-      type: 'mcq', topic: 'Aggregates', limit: 90,
-      text: 'This query returns two different numbers. Why?',
-      code: 'SELECT COUNT(*), COUNT(email)\nFROM customer;',
-      options: [
-        'COUNT(email) skips rows where email is NULL',
-        'COUNT(*) counts columns, not rows',
-        'COUNT(email) counts only distinct emails',
-        'It is a syntax error',
-      ],
-      correct: 0,
-    },
-    {
       type: 'sql', topic: 'Aggregates', limit: 135,
       text: 'Show each city together with the number of customers in it.',
       model: 'SELECT city, COUNT(*) FROM customer GROUP BY city;',
@@ -71,27 +54,6 @@
         'SELECT COUNT(*), city FROM customer GROUP BY city',
         'SELECT COUNT(*) {n}, city FROM customer GROUP BY city',
       ],
-    },
-    {
-      type: 'mcq', topic: 'Aggregates', limit: 85,
-      text: 'Which clause keeps only the groups you want after GROUP BY, e.g. cities with more than 10 customers?',
-      options: ['WHERE', 'HAVING', 'ORDER BY', 'LIMIT'], correct: 1,
-    },
-    {
-      type: 'tf', topic: 'Keys', limit: 75,
-      text: 'A primary key column may contain NULL values.',
-      correct: 1,
-    },
-    {
-      type: 'mcq', topic: 'Joins', limit: 85,
-      text: 'customer INNER JOIN orders ON the customer_id. Which customers appear in the result?',
-      options: [
-        'Every customer',
-        'Only customers with at least one order',
-        'Only customers with no orders',
-        'Every customer paired with every order',
-      ],
-      correct: 1,
     },
     {
       type: 'sql', topic: 'Joins', limit: 160, maxTime: 480,
@@ -115,36 +77,10 @@
       correct: 1,
     },
     {
-      type: 'sql', topic: 'Joins', limit: 180, maxTime: 480,
-      text: 'List the names of the customers who have never placed an order.',
-      model: 'SELECT c.name\nFROM customer c\nLEFT JOIN orders o ON c.customer_id = o.customer_id\nWHERE o.order_id IS NULL;',
-      answers: [
-        'SELECT {c}.name FROM customer {c} LEFT JOIN orders {o} ON {c}.customer_id = {o}.customer_id WHERE {o}.order_id IS NULL',
-        'SELECT {c}.name FROM customer {c} LEFT JOIN orders {o} ON {o}.customer_id = {c}.customer_id WHERE {o}.order_id IS NULL',
-        'SELECT {c}.name FROM customer {c} LEFT JOIN orders {o} ON {c}.customer_id = {o}.customer_id WHERE {o}.customer_id IS NULL',
-        'SELECT {c}.name FROM customer {c} LEFT JOIN orders {o} ON {o}.customer_id = {c}.customer_id WHERE {o}.customer_id IS NULL',
-        'SELECT name FROM customer WHERE customer_id NOT IN (SELECT customer_id FROM orders)',
-        'SELECT name FROM customer {c} WHERE NOT EXISTS (SELECT * FROM orders {o} WHERE {o}.customer_id = {c}.customer_id)',
-        'SELECT name FROM customer {c} WHERE NOT EXISTS (SELECT 1 FROM orders {o} WHERE {o}.customer_id = {c}.customer_id)',
-      ],
-    },
-    {
-      type: 'mcq', topic: 'Normalization', limit: 90,
-      text: 'Which normal form does this table break?',
-      code: "student(id, name, phones)\n\n1 | Nimal | '0771234567, 0719876543'",
-      options: ['1NF', '2NF', '3NF', 'It is fine'], correct: 0,
-    },
-    {
       type: 'mcq', topic: 'Normalization', limit: 90,
       text: 'student_name depends only on student_id. Which normal form is broken?',
       code: 'enrolment(student_id, course_id, student_name, grade)\nkey = (student_id, course_id)',
       options: ['1NF', '2NF', '3NF', 'None'], correct: 1,
-    },
-    {
-      type: 'mcq', topic: 'Normalization', limit: 90,
-      text: 'dept_name depends on dept_id, which depends on the key emp_id. Which normal form is broken?',
-      code: 'employee(emp_id, dept_id, dept_name)\nemp_id → dept_id → dept_name',
-      options: ['1NF', '2NF', '3NF', 'It is fine'], correct: 2,
     },
     {
       type: 'mcq', topic: 'Indexing', limit: 90,
@@ -156,12 +92,6 @@
         'UPDATE customer SET city = UPPER(city)',
       ],
       correct: 0,
-    },
-    {
-      type: 'sql', topic: 'Indexing', limit: 120,
-      text: 'Create an index on the city column of the customer table (any index name).',
-      model: 'CREATE INDEX idx_customer_city ON customer(city);',
-      answers: ['CREATE INDEX {i} ON customer (city)'],
     },
     {
       type: 'mcq', topic: 'Recursive CTE', limit: 105, maxTime: 480,
@@ -185,12 +115,6 @@
         'COUNT(*) OVER (PARTITION BY salary)',
       ],
       correct: 0,
-    },
-    {
-      type: 'mcq', topic: 'Window functions', limit: 95, maxTime: 480,
-      text: 'employee has 12 rows in 3 departments. How many rows does this query return?',
-      code: 'SELECT name, dept, salary,\n       AVG(salary) OVER (PARTITION BY dept) AS dept_avg\nFROM employee;',
-      options: ['3', '12', '36', '1'], correct: 1,
     },
   ];
 

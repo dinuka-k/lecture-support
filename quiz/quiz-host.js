@@ -33,16 +33,34 @@
   // Changes to the built-in questions, applied once to a list saved before them:
   // version 2 gave every question one more minute, version 3 gave the first
   // question (SELECT * FROM customer) one minute.
-  const Q_VERSION = 3;
+  const Q_VERSION = 4;
+
+  // Built-in questions dropped when the default set went from 20 to 10.
+  const DROPPED = [
+    'Which clause keeps only the rows that match a condition?',
+    'This query returns two different numbers. Why?',
+    'Which clause keeps only the groups you want after GROUP BY, e.g. cities with more than 10 customers?',
+    'A primary key column may contain NULL values.',
+    'customer INNER JOIN orders ON the customer_id. Which customers appear in the result?',
+    'List the names of the customers who have never placed an order.',
+    'Which normal form does this table break?',
+    'dept_name depends on dept_id, which depends on the key emp_id. Which normal form is broken?',
+    'Create an index on the city column of the customer table (any index name).',
+    'employee has 12 rows in 3 departments. How many rows does this query return?',
+  ];
 
   function loadQuestions() {
-    const q = load(Q_KEY);
+    let q = load(Q_KEY);
     if (!Array.isArray(q) || !q.length) return D.cloneDefaults();
     const ver = load(Q_VER_KEY) || 1;
     if (ver < Q_VERSION) {
       if (ver < 2) q.forEach((x) => { x.limit = Math.min(600, (parseInt(x.limit, 10) || 20) + 60); });
       const first = D.DEFAULT_QUESTIONS[0];
       q.forEach((x) => { if (x.text === first.text) x.limit = first.limit; });
+      if (ver < 4) {
+        q = q.filter((x) => !DROPPED.includes(x.text));
+        if (!q.length) q = D.cloneDefaults();
+      }
       store(Q_KEY, q);
       store(Q_VER_KEY, Q_VERSION);
     }

@@ -112,7 +112,7 @@
     else if (name === 'up' && sel > 0) { qs.splice(sel - 1, 0, qs.splice(sel, 1)[0]); sel--; }
     else if (name === 'down' && sel < qs.length - 1) { qs.splice(sel + 1, 0, qs.splice(sel, 1)[0]); sel++; }
     else if (name === 'reset') {
-      if (!confirm('Replace all questions with the 20 built-in DBMS questions?')) return;
+      if (!confirm('Replace all questions with the 10 built-in DBMS questions?')) return;
       qs = global.QuizHost.resetQuestions(); sel = 0;
     }
     else if (name === 'export') { exportJson(); return; }

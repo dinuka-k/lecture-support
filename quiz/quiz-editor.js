@@ -54,7 +54,8 @@
         '<label class="ed-field"><span>Type</span><select class="input" data-k="type">' +
           Object.keys(TYPES).map((t) => '<option value="' + t + '"' + (q.type === t ? ' selected' : '') + '>' + TYPES[t] + '</option>').join('') + '</select></label>' +
         '<label class="ed-field"><span>Topic</span><input class="input" data-k="topic" value="' + esc(q.topic) + '" placeholder="e.g. Joins"></label>' +
-        '<label class="ed-field ed-small"><span>Seconds</span><input class="input" type="number" min="5" max="600" data-k="limit" value="' + q.limit + '"></label>' +
+        '<label class="ed-field ed-small"><span>Seconds <small>full points</small></span><input class="input" type="number" min="5" max="600" data-k="limit" value="' + q.limit + '"></label>' +
+        '<label class="ed-field ed-small"><span>Auto-finish <small>seconds</small></span><input class="input" type="number" min="5" max="3600" data-k="maxTime" value="' + (q.maxTime || global.QuizData.MAX_TIME) + '"></label>' +
       '</div>' +
       '<label class="ed-field"><span>Question</span><textarea class="input" data-k="text" rows="2">' + esc(q.text) + '</textarea></label>' +
       '<label class="ed-field"><span>Code or table <small>optional, shown in a monospace box</small></span><textarea class="input mono" data-k="code" rows="3" spellcheck="false">' + esc(q.code) + '</textarea></label>' +
@@ -67,11 +68,13 @@
     if (!q) return;
     if (t.dataset.k === 'type') {
       const nq = blank(t.value);
-      nq.text = q.text; nq.topic = q.topic; nq.code = q.code;
+      nq.text = q.text; nq.topic = q.topic; nq.code = q.code; nq.maxTime = q.maxTime;
       qs[sel] = nq;
       renderForm();
     } else if (t.dataset.k === 'limit') {
       q.limit = Math.max(5, Math.min(600, parseInt(t.value, 10) || 20));
+    } else if (t.dataset.k === 'maxTime') {
+      q.maxTime = Math.max(5, Math.min(3600, parseInt(t.value, 10) || global.QuizData.MAX_TIME));
     } else if (t.dataset.k === 'answers') {
       q.answers = t.value.split('\n').map((s) => s.trim()).filter(Boolean);
     } else if (t.dataset.k) {

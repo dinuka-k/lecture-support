@@ -46,6 +46,11 @@
       store(Q_KEY, q);
       store(Q_VER_KEY, Q_VERSION);
     }
+    // Built-in questions in a saved list get their auto-finish time (8 min for the hard ones).
+    q.forEach((x) => {
+      const d = D.DEFAULT_QUESTIONS.find((o) => o.text === x.text);
+      if (x.maxTime == null && d && d.maxTime) x.maxTime = d.maxTime;
+    });
     return q;
   }
   function saveQuestions() { store(Q_KEY, questions); store(Q_VER_KEY, Q_VERSION); }
@@ -310,7 +315,7 @@
     return {
       t: 'question', qi: G.qi, total: G.questions.length, type: q.type, topic: q.topic || '',
       text: q.text, code: q.code || '', options: q.type === 'sql' ? [] : optionsOf(q),
-      limit: q.limit, elapsed: Date.now() - G.startedAt,
+      limit: q.limit, maxTime: maxOf(q), elapsed: Date.now() - G.startedAt,
       schema: q.type === 'sql' ? D.SCHEMA : null,
     };
   }
@@ -376,6 +381,9 @@
     if (G.phase !== 'reveal' && G.phase !== 'board') return;
     G.phase = 'question';
     G.startedAt = Date.now() - (G.frozen || 0);
+    // It ended by itself at the auto-finish time: give it one more minute.
+    const q = G.questions[G.qi];
+    if ((G.frozen || 0) >= maxOf(q) * 1000) q.maxTime = Math.min(3600, Math.ceil(G.frozen / 1000) + 60);
     saveGame();
     online().forEach(sendState);
     render();
@@ -389,9 +397,11 @@
   function extendTime(sec) {
     if (G.phase !== 'question') return;
     const q = G.questions[G.qi];
+    const max = maxOf(q);
     q.limit = Math.min(3600, q.limit + sec);
+    q.maxTime = Math.min(3600, max + sec);   // the auto-finish moves back too
     saveGame();
-    online().forEach((p) => send(p, { t: 'extend', qi: G.qi, limit: q.limit, elapsed: Date.now() - G.startedAt }));
+    online().forEach((p) => send(p, { t: 'extend', qi: G.qi, limit: q.limit, maxTime: q.maxTime, elapsed: Date.now() - G.startedAt }));
     updateTimer();
     ui.toast('+1 minute · ' + clock(Math.max(0, Math.ceil((q.limit * 1000 - (Date.now() - G.startedAt)) / 1000))) + ' left');
   }
@@ -635,8 +645,15 @@
     if (num) num.textContent = left > 0 ? clock(Math.ceil(left / 1000)) : clock(Math.floor(elapsed / 1000));
     if (ring) ring.style.strokeDashoffset = String(119.4 * (1 - left / (q.limit * 1000)));
     if (t) { t.classList.toggle('low', left > 0 && left < 10000); t.classList.toggle('over', left <= 0); }
-    if (up) up.hidden = left > 0;
+    if (up) {
+      up.hidden = left > 0;
+      up.textContent = 'Time is up · right answers now get 500 · ends at ' + clock(maxOf(q));
+    }
+    if (elapsed >= maxOf(q) * 1000) finishQuestion();
   }
+
+  // Seconds after which the question ends by itself.
+  function maxOf(q) { return Math.max(q.limit, q.maxTime || D.MAX_TIME); }
 
   function clock(sec) {
     return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');

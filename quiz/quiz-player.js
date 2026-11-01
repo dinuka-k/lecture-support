@@ -67,7 +67,7 @@
         break;
       case 'dq': disqualified(msg); break;
       case 'extend':
-        if (current && current.qi === msg.qi) { current.limit = msg.limit; startedAt = Date.now() - msg.elapsed; if (open) countdown(); }
+        if (current && current.qi === msg.qi) { current.limit = msg.limit; current.maxTime = msg.maxTime; startedAt = Date.now() - msg.elapsed; if (open) countdown(); }
         break;
       case 'result': result(msg); break;
       case 'final': final(msg); break;
@@ -198,7 +198,12 @@
     root.querySelector('#pRing').style.strokeDashoffset = String(119.4 * (1 - left / limit));
     t.classList.toggle('low', left > 0 && left < 10000);
     t.classList.toggle('over', left <= 0);
-    root.querySelector('#pOver').hidden = left > 0;
+    const over = root.querySelector('#pOver');
+    over.hidden = left > 0;
+    if (current.maxTime) {
+      const m = current.maxTime;
+      over.textContent = 'Time is up: you can still answer for 500 points until ' + Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+    }
   }
 
   function answer(value) {

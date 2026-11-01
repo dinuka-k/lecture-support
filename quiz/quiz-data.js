@@ -10,6 +10,10 @@
     { table: 'employee', cols: ['emp_id', 'name', 'dept', 'salary', 'manager_id'] },
   ];
 
+  // limit: seconds for full points (1000 falling to 500). maxTime: seconds after
+  // which the question ends by itself (default MAX_TIME; longer for hard ones).
+  const MAX_TIME = 300;
+
   // Question types:
   //   mcq  options[] + correct (index)
   //   tf   true / false, correct 0 = True, 1 = False
@@ -90,7 +94,7 @@
       correct: 1,
     },
     {
-      type: 'sql', topic: 'Joins', limit: 160,
+      type: 'sql', topic: 'Joins', limit: 160, maxTime: 480,
       text: 'Show each order_id together with the name of the customer who placed it.',
       model: 'SELECT o.order_id, c.name\nFROM orders o\nJOIN customer c ON o.customer_id = c.customer_id;',
       answers: [
@@ -111,7 +115,7 @@
       correct: 1,
     },
     {
-      type: 'sql', topic: 'Joins', limit: 180,
+      type: 'sql', topic: 'Joins', limit: 180, maxTime: 480,
       text: 'List the names of the customers who have never placed an order.',
       model: 'SELECT c.name\nFROM customer c\nLEFT JOIN orders o ON c.customer_id = o.customer_id\nWHERE o.order_id IS NULL;',
       answers: [
@@ -160,7 +164,7 @@
       answers: ['CREATE INDEX {i} ON customer (city)'],
     },
     {
-      type: 'mcq', topic: 'Recursive CTE', limit: 105,
+      type: 'mcq', topic: 'Recursive CTE', limit: 105, maxTime: 480,
       text: 'What does this query return?',
       code: 'WITH RECURSIVE chain AS (\n  SELECT emp_id, name, manager_id\n  FROM employee WHERE emp_id = 5\n  UNION ALL\n  SELECT e.emp_id, e.name, e.manager_id\n  FROM employee e\n  JOIN chain c ON e.emp_id = c.manager_id\n)\nSELECT name FROM chain;',
       options: [
@@ -172,7 +176,7 @@
       correct: 0,
     },
     {
-      type: 'mcq', topic: 'Window functions', limit: 95,
+      type: 'mcq', topic: 'Window functions', limit: 95, maxTime: 480,
       text: 'Which expression ranks employees by salary within each department?',
       options: [
         'RANK() OVER (PARTITION BY dept ORDER BY salary DESC)',
@@ -183,7 +187,7 @@
       correct: 0,
     },
     {
-      type: 'mcq', topic: 'Window functions', limit: 95,
+      type: 'mcq', topic: 'Window functions', limit: 95, maxTime: 480,
       text: 'employee has 12 rows in 3 departments. How many rows does this query return?',
       code: 'SELECT name, dept, salary,\n       AVG(salary) OVER (PARTITION BY dept) AS dept_avg\nFROM employee;',
       options: ['3', '12', '36', '1'], correct: 1,
@@ -293,5 +297,5 @@
     return out;
   }
 
-  global.QuizData = { SCHEMA, DEFAULT_QUESTIONS, cloneDefaults, normSql, checkSql, sha256 };
+  global.QuizData = { SCHEMA, MAX_TIME, DEFAULT_QUESTIONS, cloneDefaults, normSql, checkSql, sha256 };
 })(window);

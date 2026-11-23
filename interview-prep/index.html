@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interview Prep</title>
+  <meta name="author" content="Dinuka Kodithuwakku">
+  <meta name="description" content="Technical interview preparation for graduates: mindset, projects, answering questions, thinking aloud, DSA patterns, system design and practice.">
+  <script>try { var t = localStorage.getItem('lecture-demos.theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="interview.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></symbol>
+    <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h4"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  </svg>
+
+  <div class="app">
+    <div class="stage" id="stage">
+      <div class="deck" id="deck" data-watermark-host>
+
+        <!-- 1 · Title -->
+        <section class="slide title-slide center" data-part="Welcome" data-title="Cracking your first technical interview">
+          <div class="eyebrow">Career session · for final-year undergraduates</div>
+          <h1>Cracking your first <span class="grad">technical interview</span></h1>
+          <p class="sub">It is a conversation, not an exam. Here is how to prepare for it, think through it and talk through it.</p>
+          <div class="byline"><span class="dot"></span>Session by <b data-author></b></div>
+          <aside class="notes">
+            <p>Open with a question to the room: "Who has already faced a technical interview? Who felt it went like a viva?"</p>
+            <p>Promise: by the end they will know what interviewers actually look for and have a plan to practise it.</p>
+          </aside>
+        </section>
+
+        <!-- 2 · The one idea -->
+        <section class="slide" data-part="Mindset" data-title="An interview is a two-way conversation">
+          <div class="kicker"><b>01</b>Mindset</div>
+          <h2 class="head">An interview is a <em>two-way conversation</em>, not an exam or a viva</h2>
+          <table class="vs">
+            <thead><tr><th>An exam or viva</th><th>A job interview</th></tr></thead>
+            <tbody>
+              <tr class="f"><td>Checks how well you studied</td><td>Checks how you think, work and communicate</td></tr>
+              <tr class="f"><td>Gives marks for right answers</td><td>Looks for fit, on both sides</td></tr>
+              <tr class="f"><td>The examiner judges you</td><td>You are judging the company too</td></tr>
+              <tr class="f"><td>Questions try to catch what you missed</td><td>Questions try to understand you</td></tr>
+              <tr class="f"><td>One correct answer wins</td><td>How you got there matters as much as where you landed</td></tr>
+            </tbody>
+          </table>
+          <p class="small mt-auto f">Goal of the hour: walk out able to <b>have</b> that conversation well.</p>
+          <aside class="notes">
+            <p>This is the frame for everything else. Come back to it often.</p>
+            <p>Both sides are trying to answer one question: "Are we a good match?"</p>
+          </aside>
+        </section>
+
+        <!-- 3 · Agenda -->
+        <section class="slide" data-part="Mindset" data-title="Today's plan">
+          <div class="kicker"><b>00</b>Agenda</div>
+          <h2 class="head">Seven things we cover in the next hour</h2>
+          <div class="agenda">
+            <div class="item"><span class="n">01</span><span class="t">Mindset</span><span class="d">Why the bar went up, fit works both ways</span><span class="time">6 min</span></div>
+            <div class="item"><span class="n">02</span><span class="t">Projects &amp; CV</span><span class="d">Your contribution is your experience</span><span class="time">10 min</span></div>
+            <div class="item"><span class="n">03</span><span class="t">Answering well</span><span class="d">Answer first, honesty, the right length</span><span class="time">10 min</span></div>
+            <div class="item"><span class="n">04</span><span class="t">Thinking aloud</span><span class="d">Three worked problems, out loud</span><span class="time">14 min</span></div>
+            <div class="item"><span class="n">05</span><span class="t">DSA patterns</span><span class="d">Recognise, do not memorise</span><span class="time">6 min</span></div>
+            <div class="item"><span class="n">06</span><span class="t">System design</span><span class="d">Everything is a trade-off</span><span class="time">7 min</span></div>
+            <div class="item"><span class="n">07</span><span class="t">Practice &amp; AI</span><span class="d">Mocks, AI as a coach, your plan</span><span class="time">7 min</span></div>
+            <div class="item" style="background:var(--accent-soft)"><span class="n">?</span><span class="t">Q&amp;A</span><span class="d">Anything you want to ask</span><span class="time">rest</span></div>
+          </div>
+          <aside class="notes"><p>Keep this quick, 20 seconds. If time runs short later, shorten part 5, never the worked problems.</p></aside>
+        </section>
+
+        <!-- 4 · Bar is higher -->
+        <section class="slide" data-part="Mindset" data-title="The bar for entry-level roles is higher now">
+          <div class="kicker"><b>01</b>Mindset</div>
+          <h2 class="head">Fundamentals used to be enough. Today you also need <em>hands-on proof</em></h2>
+          <div class="cols wide-right">
+            <div class="box">
+              <h3>Why the bar went up</h3>
+              <ul class="ticks tight small">
+                <li class="f"><b>More candidates</b> per opening: more graduates, bootcamps, self-taught developers</li>
+                <li class="f"><b>The AI shift:</b> routine code is cheap now, so judgement and problem solving matter more</li>
+                <li class="f"><b>Remote hiring</b> means you compete with a much wider pool</li>
+                <li class="f"><b>Fewer junior openings</b> after the industry's hiring slowdown</li>
+                <li class="f"><b>Online assessments</b> filter hundreds of applicants before a human sees you</li>
+              </ul>
+            </div>
+            <div class="stack">
+              <div class="box accent f">
+                <h3>So what?</h3>
+                <p>Knowing concepts gets you in the door. <b>Showing you have built things</b> gets you the job.</p>
+              </div>
+              <div class="box violet f">
+                <h3>Your projects are your experience</h3>
+                <p class="small">Academic, personal, hackathon, open source: put them on your CV and know them inside out.</p>
+              </div>
+            </div>
+          </div>
+          <aside class="notes">
+            <p>Not to scare them: the good news is the "hands-on proof" is something they already have from coursework, they just need to present it.</p>
+          </aside>
+        </section>
+
+        <!-- 5 · Fit both ways -->
+        <section class="slide" data-part="Mindset" data-title="Fit works both ways">
+          <div class="kicker"><b>01</b>Mindset</div>
+          <h2 class="head">You are choosing them as much as they are choosing you</h2>
+          <div class="cols">
+            <div class="box f">
+              <span class="tag accent">They ask</span>
+              <ul class="ticks tight" style="margin-top:12px">
+                <li>Can this person do the work?</li>
+                <li>Will they learn and grow fast?</li>
+                <li>Will they work well with our team?</li>
+              </ul>
+            </div>
+            <div class="box f">
+              <span class="tag violet">You ask</span>
+              <ul class="ticks tight" style="margin-top:12px">
+                <li>Do I like the <b>domain</b> they work in?</li>
+                <li>Do I want to learn their <b>tech stack</b>?</li>
+                <li>Does the <b>culture</b> suit how I work?</li>
+              </ul>
+            </div>
+          </div>
+          <div class="box good f" style="margin-top:22px">
+            <h3>Not selected does not mean not good enough</h3>
+            <p>It often means <b>not the best fit for that role, at that time</b>. You will not fit everywhere, and you do not need to. Do not take it personally: learn from it and move to the next one.</p>
+          </div>
+          <aside class="notes"><p>Share a personal story of a rejection that turned out well, if you have one.</p></aside>
+        </section>
+
+        <!-- 6 · Research -->
+        <section class="slide" data-part="Mindset" data-title="Research the company first">
+          <div class="kicker"><b>01</b>Mindset</div>
+          <h2 class="head">Spend 15 minutes researching the company, even for a career fair walk-in</h2>
+          <div class="cols wide-left">
+            <div class="box">
+              <h3>What to find out</h3>
+              <ul class="ticks tight small">
+                <li class="f"><b>What they build:</b> products, clients, domain (fintech, health, telco...)</li>
+                <li class="f"><b>Tech stack:</b> job post, engineering blog, GitHub, engineers' LinkedIn</li>
+                <li class="f"><b>Culture and size:</b> startup or enterprise, how teams work</li>
+                <li class="f"><b>Recent news:</b> new product, funding, expansion</li>
+              </ul>
+              <p class="small f" style="margin-top:14px">Use it: pick project examples that match their stack and domain.</p>
+            </div>
+            <div class="box accent f">
+              <h3>Ask them good questions</h3>
+              <ul class="ticks tight small">
+                <li>"What does a new graduate work on in the first three months?"</li>
+                <li>"How do code reviews and mentoring work in the team?"</li>
+                <li>"I saw you moved to microservices last year. How did that go?"</li>
+                <li>"What does success look like after six months?"</li>
+              </ul>
+              <p class="small" style="margin-top:12px">Questions show genuine interest, and help <b>you</b> decide.</p>
+            </div>
+          </div>
+          <aside class="notes"><p>"Do you have any questions for us?" is not a formality. "No" is a missed chance.</p></aside>
+        </section>
+
+        <!-- 7 · Projects are your experience -->
+        <section class="slide" data-part="Projects" data-title="Projects are your experience">
+          <div class="kicker"><b>02</b>Projects &amp; CV</div>
+          <h2 class="head">Projects are your experience: list them, and be ready to explain every line</h2>
+          <div class="cols">
+            <div class="box">
+              <h3>On the CV, for each project</h3>
+              <ul class="ticks tight small">
+                <li class="f"><b>The problem</b> it solves, in one line</li>
+                <li class="f"><b>Your role</b> and what you personally built</li>
+                <li class="f"><b>The stack</b> you used</li>
+                <li class="f"><b>A result</b>: users, speed, grade, award, a number if you have one</li>
+              </ul>
+            </div>
+            <div class="box">
+              <h3>Example line</h3>
+              <p class="small f"><b>Campus Bus Tracker</b> · group of 4 · Flutter, Node.js, PostgreSQL</p>
+              <p class="small f" style="margin-top:10px">Built the live-location API and map screen; cut location update delay from 10 s to 2 s using WebSockets. Used by 300+ students.</p>
+              <p class="small muted f" style="margin-top:12px">Every word here is a question you may be asked. If you cannot talk about it, remove it.</p>
+            </div>
+          </div>
+          <aside class="notes"><p>Academic projects count. Final-year project, group assignments, personal side projects, all of it.</p></aside>
+        </section>
+
+        <!-- 8 · Your contribution -->
+        <section class="slide" data-part="Projects" data-title="We care about your contribution">
+          <div class="kicker"><b>02</b>Projects &amp; CV</div>
+          <h2 class="head">They do not care how big the project was. They care <em>what you did</em> in it</h2>
+          <div class="chat">
+            <div class="msg f"><span class="who">Interviewer</span><div class="bubble">Tell me about your final-year project.</div></div>
+            <div class="msg bad f"><span class="who">Weak</span><div class="bubble">It is a streaming platform like Netflix. It has login, recommendations, payments, an admin panel, and we used React, Spring Boot and MySQL...</div></div>
+            <div class="msg f"><span class="who">Interviewer</span><div class="bubble silence">(thinking) Okay, but what did <b>you</b> do?</div></div>
+            <div class="msg good f"><span class="who">Strong</span><div class="bubble">I owned the recommendation service. I designed the ratings table, wrote the API, and brought response time from 2 s to 300 ms by caching popular results. The team was four people; the others did payments, UI and admin.</div></div>
+          </div>
+          <p class="small mt-auto f">Even a Netflix-sized group project tells them nothing until they hear <b>your role, your decisions and your contribution</b>.</p>
+          <aside class="notes"><p>Ask the room: "Which answer lets the interviewer ask a good follow-up?" The strong one, because it has concrete hooks: caching, 2 s to 300 ms.</p></aside>
+        </section>
+
+        <!-- 9 · Know your project -->
+        <section class="slide" data-part="Projects" data-title="Know your project in four layers">
+          <div class="kicker"><b>02</b>Projects &amp; CV</div>
+          <h2 class="head">Prepare each project in four layers, not just the collaboration story</h2>
+          <div class="cols c4 stretch">
+            <div class="box accent f"><span class="tag accent">1 · Problem</span><p class="small" style="margin-top:10px">What problem does it solve, and for whom? Why does it matter?</p></div>
+            <div class="box violet f"><span class="tag violet">2 · Solution</span><p class="small" style="margin-top:10px">Overall architecture. Main components and how they talk. Why this design?</p></div>
+            <div class="box f"><span class="tag">3 · Your part</span><p class="small" style="margin-top:10px">What you built, decisions you made, how you worked with the team (Git, reviews, conflicts).</p></div>
+            <div class="box good f"><span class="tag good">4 · Lessons</span><p class="small" style="margin-top:10px">What broke, how you fixed it, what you would do differently now.</p></div>
+          </div>
+          <div class="box f" style="margin-top:20px">
+            <h3>Test yourself: can you draw it on a whiteboard in 60 seconds?</h3>
+            <p class="small">Mobile app → API server → database, plus whatever else exists (queue, cache, third-party APIs). If you cannot sketch your own system, revisit it before the interview.</p>
+          </div>
+          <aside class="notes"><p>Common follow-ups: "Why that database?" "What would happen with 10x users?" "What was the hardest bug?" "If you started again, what would you change?"</p></aside>
+        </section>
+
+        <!-- 10 · True story, practised delivery -->
+        <section class="slide" data-part="Projects" data-title="True story, practised delivery">
+          <div class="kicker"><b>02</b>Projects &amp; CV</div>
+          <h2 class="head">Never invent the story. <em>Practise how you tell it</em></h2>
+          <div class="cols">
+            <div class="stack">
+              <div class="box bad f">
+                <h3>Do not fabricate</h3>
+                <p class="small">Follow-up questions go deep fast. A made-up story falls apart by the third "why", and so does their trust in you.</p>
+              </div>
+              <div class="box good f">
+                <h3>Do practise the articulation</h3>
+                <p class="small">Not a memorised script: know the points, then say them out loud until it comes out clear, in any order they ask.</p>
+              </div>
+            </div>
+            <div class="box accent f">
+              <h3>Follow-ups are not a lie detector</h3>
+              <p class="small">"Why did you use MongoDB?" is not checking if you really did it.</p>
+              <p class="small">They want to see <b>how you handled the problem</b>: what you considered, what you chose, what you learned.</p>
+              <p class="small" style="margin-top:12px">For "tell me about a time..." questions, use <b>STAR</b>: Situation, Task, Action (the biggest part), Result.</p>
+            </div>
+          </div>
+          <aside class="notes"><p>Remind them again: this is not a viva. Nobody is trying to catch them out.</p></aside>
+        </section>
+
+        <!-- 11 · Answer first -->
+        <section class="slide" data-part="Answering" data-title="Answer first, then the reasons">
+          <div class="kicker"><b>03</b>Answering well</div>
+          <h2 class="head">Give your answer first, then the facts that support it</h2>
+          <div class="anchor f">
+            <div class="main"><small>Answer · the anchor</small>"I would pick PostgreSQL."</div>
+            <div class="facts">
+              <div class="fact f">Reason 1: the data is relational: users, orders, payments</div>
+              <div class="fact f">Reason 2: payments need transactions</div>
+              <div class="fact f">Reason 3: the team already knows SQL</div>
+            </div>
+          </div>
+          <div class="cols" style="margin-top:22px">
+            <div class="box f">
+              <h3>Why it works</h3>
+              <p class="small">The listener gets a hook first, so every fact has a place to attach to. Neither of you gets lost.</p>
+            </div>
+            <div class="box warn f">
+              <h3>Remember who is listening</h3>
+              <p class="small">The panel is busy, maybe tired after many candidates. Like you in a hard lecture: once they get lost, they stop listening.</p>
+            </div>
+          </div>
+          <p class="small mt-auto f">Works everywhere: stand-ups, emails, code reviews, life. <b>This deck follows it too: every headline is the answer.</b></p>
+          <aside class="notes">
+            <p>Contrast: story first ("So first we looked at MySQL, then someone said MongoDB, then...") leaves the listener guessing where it is going.</p>
+            <p>It is a skill, not a talent. You only get it by practising.</p>
+          </aside>
+        </section>
+
+        <!-- 12 · I don't know -->
+        <section class="slide" data-part="Answering" data-title="Say I don't know, then add what you do know">
+          <div class="kicker"><b>03</b>Answering well</div>
+          <h2 class="head">If you do not know, say so clearly, then add what you <em>do</em> know</h2>
+          <div class="chat">
+            <div class="msg f"><span class="who">Interviewer</span><div class="bubble">Have you worked with React?</div></div>
+            <div class="msg bad f"><span class="who">Weak</span><div class="bubble">Yes, a little... I mean, I have seen some tutorials, it uses components and, um, hooks and things...</div></div>
+            <div class="msg good f"><span class="who">Strong</span><div class="bubble">No, not React. But I have built two apps with Angular and one with Vue, so components and state management are familiar. I would expect to pick React up quickly.</div></div>
+          </div>
+          <div class="cols" style="margin-top:20px">
+            <div class="box f"><p class="small">Bluffing loses their interest faster than a gap in knowledge. Nobody expects you to know everything.</p></div>
+            <div class="box accent f"><p class="small">If what they need is far beyond what you have, that is fine too. It is a conversation: maybe this role is not the fit.</p></div>
+          </div>
+          <aside class="notes"><p>Same for technical questions: "I am not sure about the exact algorithm, but I know it uses a heap, so my guess is O(n log n)." Partial, honest reasoning beats a confident wrong answer.</p></aside>
+        </section>
+
+        <!-- 13 · Keep it simple -->
+        <section class="slide" data-part="Answering" data-title="Simple, but not awkwardly simple">
+          <div class="kicker"><b>03</b>Answering well</div>
+          <h2 class="head">Keep answers simple, but not <em>awkwardly</em> simple</h2>
+          <div class="chat">
+            <div class="msg f"><span class="who">Interviewer</span><div class="bubble">Can you explain the difference between a queue and a stack?</div></div>
+            <div class="msg bad f"><span class="who">Too short</span><div class="bubble">Yes. <span class="silence">(silence... the interviewer now has to say "Go on, explain")</span></div></div>
+            <div class="msg bad f"><span class="who">Too long</span><div class="bubble">Five minutes on arrays, linked lists, memory, Java's Deque class, and a story about a lab assignment...</div></div>
+            <div class="msg good f"><span class="who">Just right</span><div class="bubble">Yes. The main difference is the order items come out. A queue is first in, first out, like a line at a counter. A stack is last in, first out, like a pile of plates.</div></div>
+          </div>
+          <p class="small mt-auto f">Then stop. If they want more, they will ask, and that is a good sign, not a failure.</p>
+          <aside class="notes"><p>Point out: "Can you explain...?" is a polite way of saying "Explain". Answer the intent, not the literal yes/no.</p></aside>
+        </section>
+
+        <!-- 14 · Two questions -->
+        <section class="slide" data-part="Answering" data-title="Two questions in one: answer both">
+          <div class="kicker"><b>03</b>Answering well</div>
+          <h2 class="head">Two questions in one breath? Relax, and answer both parts</h2>
+          <div class="chat">
+            <div class="msg f"><span class="who">Interviewer</span><div class="bubble">Can you explain the difference between a queue and a stack, <b>and</b> where have you used them in your projects?</div></div>
+            <div class="msg good f"><span class="who">You</span><div class="bubble">Two parts, let me take them in order. <b>First</b>, the difference: a queue is first in, first out, a stack is last in, first out. <b>Second</b>, in my food delivery project I used a queue for incoming orders so they were processed in arrival order, and a stack for the undo feature in the cart.</div></div>
+          </div>
+          <div class="cols c3" style="margin-top:20px">
+            <div class="box f"><h3>Signpost</h3><p class="small">"Two parts", "first", "second" keeps both of you on track.</p></div>
+            <div class="box f"><h3>Ask if needed</h3><p class="small">"Could you repeat the second part?" is perfectly fine.</p></div>
+            <div class="box good f"><h3>Breathe</h3><p class="small">The panel is not there to rag you. It is a friendly conversation to check fit.</p></div>
+          </div>
+          <aside class="notes"><p>It is fine to take a few seconds of silence before answering a question. Saying "Let me think for a moment" is a strength, not a weakness.</p></aside>
+        </section>
+
+        <!-- 15 · Thinking is graded -->
+        <section class="slide" data-part="Problem solving" data-title="They grade the thinking, not just the answer">
+          <div class="kicker"><b>04</b>Problem solving</div>
+          <h2 class="head">In problem solving they grade <em>how you think</em>, not only whether you finish</h2>
+          <p class="lead f">An unfinished solution with clear reasoning often beats a correct one written in silence.</p>
+          <div class="flow">
+            <div class="st f"><div class="n">1</div><div class="t">Clarify</div><div class="d">Inputs, size, edge cases, expected output. Never assume.</div></div>
+            <div class="st f"><div class="n">2</div><div class="t">Examples</div><div class="d">Work a normal and an edge case by hand.</div></div>
+            <div class="st f"><div class="n">3</div><div class="t">Brute force</div><div class="d">Say the simple way and its cost. Do not code it yet.</div></div>
+            <div class="st f"><div class="n">4</div><div class="t">Optimise</div><div class="d">Find the repeated work. Which structure removes it?</div></div>
+            <div class="st f"><div class="n">5</div><div class="t">Code</div><div class="d">Clean names, small steps, narrate as you go.</div></div>
+            <div class="st f"><div class="n">6</div><div class="t">Test</div><div class="d">Trace your own code on an example before saying "done".</div></div>
+          </div>
+          <div class="chips mt-auto f">
+            <span class="chip"><b>✓</b>Problem solving</span>
+            <span class="chip"><b>✓</b>Communication</span>
+            <span class="chip"><b>✓</b>Coding</span>
+            <span class="chip"><b>✓</b>Testing</span>
+            <span class="chip"><b>✓</b>Trade-offs</span>
+          </div>
+          <aside class="notes"><p>The chips are roughly what a typical interview rubric scores. The final answer is only one part of it.</p></aside>
+        </section>
+
+        <!-- 16 · Think out loud -->
+        <section class="slide" data-part="Problem solving" data-title="Think out loud">
+          <div class="kicker"><b>04</b>Problem solving</div>
+          <h2 class="head">Think out loud: narrate your <em>intent</em>, not your keystrokes</h2>
+          <div class="cols wide-right">
+            <div class="stack">
+              <div class="box bad f">
+                <h3>The silent candidate</h3>
+                <p class="small">Two minutes of quiet typing. The interviewer cannot help, cannot give credit, and starts to worry.</p>
+              </div>
+              <div class="box good f">
+                <h3>The thinking-aloud candidate</h3>
+                <p class="small">Even when stuck, the interviewer can see the reasoning and can nudge with a hint. Hints are part of the process.</p>
+              </div>
+            </div>
+            <div class="box accent f">
+              <h3>Phrases to borrow</h3>
+              <ul class="ticks tight small">
+                <li>"Let me make sure I understand the problem..."</li>
+                <li>"A simple way is X. It is O(n²) because..."</li>
+                <li>"The repeated work is here, so a hash map could remove it."</li>
+                <li>"I am choosing between A and B. I lean to A because..."</li>
+                <li>"I am stuck on this part. Let me try a smaller example."</li>
+                <li>"Let me trace this with the example before I say it works."</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes"><p>When you get a hint: acknowledge it ("Ah, so sorting first would help because...") and build on it. Using a hint well is a good signal.</p></aside>
+        </section>
+
+        <!-- 17 · Example 1: Two Sum -->
+        <section class="slide" data-part="Problem solving" data-title="Worked example 1: pair with a target sum">
+          <div class="kicker"><b>04</b>Worked example 1 · warm-up</div>
+          <h2 class="head" style="font-size:36px;margin-bottom:16px">Pair with a target sum: show the trade-off, memory for speed</h2>
+          <p class="problem">Given a list of numbers and a target, return the positions of two numbers that add up to the target. <code>[2, 7, 11, 15], target 9 → [0, 1]</code></p>
+          <div class="cols wide-left">
+            <div class="script">
+              <div class="step f"><span class="tag accent">Clarify</span><q>Can there be negatives or duplicates? Is there always exactly one answer? Can I use the same element twice?</q></div>
+              <div class="step f"><span class="tag">Brute force</span><q>The simple way checks every pair, two loops. That is O(n²) time, O(1) memory.</q></div>
+              <div class="step f"><span class="tag violet">Optimise</span><q>For each number I really ask: have I already seen target minus this? A hash map answers that in O(1).</q></div>
+              <div class="step f"><span class="tag violet">Trade-off</span><q>So O(n) time, but O(n) extra memory. If memory were tight, I could sort and use two pointers: O(n log n), but I lose the original positions.</q></div>
+              <div class="step f"><span class="tag good">Test</span><q>Trace: 2, need 7, not seen, store 2. Then 7, need 2, seen at 0. Return [0, 1].</q></div>
+            </div>
+            <pre class="code f"><span class="k">def</span> two_sum(nums, target):
+    seen = {}             <span class="c"># value -> index</span>
+    <span class="k">for</span> i, x <span class="k">in</span> enumerate(nums):
+        need = target - x
+        <span class="k">if</span> need <span class="k">in</span> seen:
+            <span class="k">return</span> [seen[need], i]
+        seen[x] = i
+    <span class="k">return</span> []          <span class="c"># no pair</span></pre>
+          </div>
+          <aside class="notes"><p>Very well known problem, which is the point: even on a known problem, they want to hear the clarifying questions and the trade-off, not a recited answer.</p></aside>
+        </section>
+
+        <!-- 18 · Example 2: Meeting rooms -->
+        <section class="slide" data-part="Problem solving" data-title="Worked example 2: how many meeting rooms">
+          <div class="kicker"><b>04</b>Worked example 2 · real-world shape</div>
+          <h2 class="head" style="font-size:36px;margin-bottom:16px">Meeting rooms: draw it, spot the pattern, explain the choice</h2>
+          <p class="problem">Given meeting times, find the minimum number of rooms needed. <code>[(9,10), (9:30,12), (11,13)] → 2</code></p>
+          <div class="cols wide-left">
+            <div class="script">
+              <div class="step f"><span class="tag accent">Clarify</span><q>If one meeting ends at 10 and another starts at 10, can they share a room? Are times already sorted? How many meetings, roughly?</q></div>
+              <div class="step f"><span class="tag">Picture it</span><q>Let me draw them on a timeline. The answer is the most meetings happening at the same moment.</q></div>
+              <div class="step f"><span class="tag">Brute force</span><q>Check every minute of the day and count overlaps. Works, but depends on time precision, not on n.</q></div>
+              <div class="step f"><span class="tag violet">Optimise</span><q>Sort by start time. Keep the end times of busy rooms in a min-heap. If the earliest-ending room is free, reuse it, else open a new one.</q></div>
+              <div class="step f"><span class="tag good">Cost</span><q>Sorting is O(n log n), each heap step O(log n). Memory O(n) in the worst case, when all meetings overlap.</q></div>
+            </div>
+            <pre class="code f"><span class="k">def</span> min_rooms(meetings):
+    meetings.sort()     <span class="c"># by start</span>
+    ends = []           <span class="c"># min-heap of ends</span>
+    <span class="k">for</span> start, end <span class="k">in</span> meetings:
+        <span class="k">if</span> ends <span class="k">and</span> ends[0] &lt;= start:
+            heappop(ends) <span class="c"># reuse room</span>
+        heappush(ends, end)
+    <span class="k">return</span> len(ends)</pre>
+          </div>
+          <aside class="notes"><p>Point out: drawing the timeline is "thinking aloud" on the whiteboard. Visualising turned a vague problem into "maximum overlap", which is the intervals pattern.</p></aside>
+        </section>
+
+        <!-- 19 · Example 3: Rate limiter -->
+        <section class="slide" data-part="Problem solving" data-title="Worked example 3: a rate limiter">
+          <div class="kicker"><b>04</b>Worked example 3 · open-ended</div>
+          <h2 class="head" style="font-size:36px;margin-bottom:16px">Rate limiter: when the question is vague, your questions are the answer</h2>
+          <p class="problem">Write <code>allow(user)</code>: each user may make at most 5 requests per minute. Return true or false.</p>
+          <div class="cols wide-left">
+            <div class="script">
+              <div class="step f"><span class="tag accent">Clarify</span><q>Per calendar minute, or any rolling 60 seconds? One server or many? How many users?</q></div>
+              <div class="step f"><span class="tag">Simple</span><q>A counter per user that resets each minute. Tiny memory, but 5 at 0:59 and 5 at 1:00 lets 10 through in two seconds.</q></div>
+              <div class="step f"><span class="tag violet">Better</span><q>Keep each user's recent request times in a queue and drop the ones older than 60 s. Exact, but stores up to 5 times per user.</q></div>
+              <div class="step f"><span class="tag violet">Trade-off</span><q>So it is accuracy against memory. With millions of users across many servers, I would move the counts to a shared store like Redis.</q></div>
+              <div class="step f"><span class="tag good">Test</span><q>Edge cases: exactly 60 s apart, a brand new user, a burst of 6 at once.</q></div>
+            </div>
+            <pre class="code f">log = defaultdict(deque)  <span class="c"># user -> times</span>
+
+<span class="k">def</span> allow(user, now):
+    q = log[user]
+    <span class="k">while</span> q <span class="k">and</span> q[0] &lt;= now - 60:
+        q.popleft()       <span class="c"># older than 1 min</span>
+    <span class="k">if</span> len(q) &lt; 5:
+        q.append(now)
+        <span class="k">return True</span>
+    <span class="k">return False</span></pre>
+          </div>
+          <aside class="notes"><p>This one bridges coding and system design. Even if they never finish the code, a candidate who asks the window question and names the accuracy vs memory trade-off has shown what the interviewer wanted.</p></aside>
+        </section>
+
+        <!-- 20 · Patterns -->
+        <section class="slide" data-part="DSA patterns" data-title="Learn patterns, not problems">
+          <div class="kicker"><b>05</b>DSA patterns</div>
+          <h2 class="head">Learn to <em>recognise patterns</em>, do not memorise solutions</h2>
+          <div class="patterns">
+            <div class="pat f"><div class="sig">"Have I seen this before?" pairs, counts</div><div class="name">Hash map</div></div>
+            <div class="pat f"><div class="sig">Sorted array, find a pair or remove duplicates</div><div class="name">Two pointers</div></div>
+            <div class="pat f"><div class="sig">Best contiguous subarray or substring</div><div class="name">Sliding window</div></div>
+            <div class="pat f"><div class="sig">Sorted data, or "smallest value that works"</div><div class="name">Binary search</div></div>
+            <div class="pat f"><div class="sig">Matching brackets, undo, next greater element</div><div class="name">Stack</div></div>
+            <div class="pat f"><div class="sig">Shortest path in a grid, level by level</div><div class="name">BFS</div></div>
+            <div class="pat f"><div class="sig">Explore all paths, connected regions</div><div class="name">DFS</div></div>
+            <div class="pat f"><div class="sig">Top k, next smallest, merge sorted lists</div><div class="name">Heap</div></div>
+            <div class="pat f"><div class="sig">All combinations, permutations, subsets</div><div class="name">Backtracking</div></div>
+            <div class="pat f"><div class="sig">Overlapping ranges, schedules</div><div class="name">Sort + intervals</div></div>
+            <div class="pat f"><div class="sig">Count the ways, best choice with overlapping subproblems</div><div class="name">Dynamic programming</div></div>
+            <div class="pat f"><div class="sig">Cycle or middle of a linked list</div><div class="name">Fast &amp; slow pointers</div></div>
+          </div>
+          <p class="small mt-auto f">A memorised answer breaks when the question changes one detail. A recognised pattern adapts.</p>
+          <aside class="notes"><p>Our three worked examples used three of these: hash map, heap with intervals, queue as a sliding window.</p></aside>
+        </section>
+
+        <!-- 21 · Constraints and practice -->
+        <section class="slide" data-part="DSA patterns" data-title="Constraints hint at the algorithm">
+          <div class="kicker"><b>05</b>DSA patterns</div>
+          <h2 class="head">Read the input size: it tells you how fast your solution must be</h2>
+          <div class="cols wide-left">
+            <div class="ladder">
+              <div class="rung f"><span class="n">n ≤ 20</span><span class="o">O(2ⁿ)</span><span class="h">Try every option: backtracking</span></div>
+              <div class="rung f"><span class="n">n ≤ 500</span><span class="o">O(n³)</span><span class="h">Triple loops are fine</span></div>
+              <div class="rung f"><span class="n">n ≤ 5,000</span><span class="o">O(n²)</span><span class="h">Check every pair</span></div>
+              <div class="rung f"><span class="n">n ≤ 10⁶</span><span class="o">O(n log n)</span><span class="h">Sort, heap, binary search</span></div>
+              <div class="rung f"><span class="n">larger</span><span class="o">O(n) · O(log n)</span><span class="h">One pass, or math</span></div>
+            </div>
+            <div class="box accent f">
+              <h3>Practise with understanding</h3>
+              <ul class="ticks tight small">
+                <li>Group problems <b>by pattern</b>, one pattern at a time</li>
+                <li>Solve, then <b>explain it aloud</b> as if to an interviewer</li>
+                <li>Write down the <b>signal</b> that pointed to the pattern</li>
+                <li><b>Re-solve a week later</b> without looking</li>
+                <li>60 to 80 well-understood problems beat 500 rushed ones</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes"><p>Rule of thumb: about 10⁸ simple operations per second. Also share the "stuck" checklist: smaller example, sort the input, try a hash map, work backwards, solve a simpler version.</p></aside>
+        </section>
+
+        <!-- 22 · System design is trade-offs -->
+        <section class="slide" data-part="System design" data-title="System design is about trade-offs">
+          <div class="kicker"><b>06</b>System design</div>
+          <h2 class="head">System design has no single right answer: it is all <em>trade-offs</em></h2>
+          <p class="lead f">The key habit: <b>"It depends, and here is on what."</b> You cannot have everything, something has to be sacrificed.</p>
+          <div class="trades">
+            <div class="trade f"><span>Low latency</span><i>⇄</i><span>Fresh data</span></div>
+            <div class="trade f"><span>Consistency</span><i>⇄</i><span>Availability</span></div>
+            <div class="trade f"><span>Performance</span><i>⇄</i><span>Cost</span></div>
+            <div class="trade f"><span>Simplicity</span><i>⇄</i><span>Scalability</span></div>
+          </div>
+          <div class="box violet f" style="margin-top:20px">
+            <h3>Example: when latency is critical, accept some staleness</h3>
+            <p class="small">Serve from a cache and update it with events in the background (an event-driven approach). Users get fast answers, but may see data that is a few seconds old. Say that cost out loud.</p>
+          </div>
+          <p class="small mt-auto f">Entry level: expect light, open-ended design questions. Nobody expects a complete design. They want to see you <b>reason about the trade-offs</b>.</p>
+          <aside class="notes"><p>Ask the room for an everyday example: a "like" count can be a few seconds stale; a bank balance cannot.</p></aside>
+        </section>
+
+        <!-- 23 · Ask, don't assume -->
+        <section class="slide" data-part="System design" data-title="Ask before you design">
+          <div class="kicker"><b>06</b>System design</div>
+          <h2 class="head">Ask clarifying questions before designing anything. <em>Never assume</em></h2>
+          <div class="cols">
+            <div class="box">
+              <h3>Questions that change the design</h3>
+              <ul class="ticks tight small">
+                <li class="f">Who uses it, and how many? 1,000 or 10 million?</li>
+                <li class="f">Mostly reads or mostly writes?</li>
+                <li class="f">What matters most: speed, accuracy, or cost?</li>
+                <li class="f">Can any data be stale? For how long?</li>
+                <li class="f">What happens if it goes down for a minute?</li>
+              </ul>
+            </div>
+            <div class="stack">
+              <div class="box bad f"><h3>Assuming</h3><p class="small">Jumps straight to microservices and Kafka for a system with 200 users.</p></div>
+              <div class="box good f"><h3>Asking</h3><p class="small">Good questions tell the panel you have real skill, before you draw a single box.</p></div>
+            </div>
+          </div>
+          <aside class="notes"><p>Same rule as coding: clarify first. The answers turn an impossible question into a specific one.</p></aside>
+        </section>
+
+        <!-- 24 · URL shortener -->
+        <section class="slide" data-part="System design" data-title="Walkthrough: a URL shortener">
+          <div class="kicker"><b>06</b>System design · walkthrough</div>
+          <h2 class="head" style="font-size:36px;margin-bottom:16px">A URL shortener in five moves, trade-offs named out loud</h2>
+          <div class="cols wide-right" style="align-items:center">
+            <ol class="moves">
+              <li class="f"><span><b>Requirements:</b> shorten a link, redirect fast, count clicks</span></li>
+              <li class="f"><span><b>Scale:</b> ~100 reads per write, so optimise reads</span></li>
+              <li class="f"><span><b>API &amp; data:</b> POST /links, GET /{code} · table code → url</span></li>
+              <li class="f"><span><b>Boxes:</b> load balancer, app servers, cache, database</span></li>
+              <li class="f"><span><b>Trade-offs:</b> click counts go through a queue, so stats lag a little but redirects stay fast</span></li>
+            </ol>
+            <svg class="diagram f" viewBox="0 0 560 300" role="img" aria-label="Client to load balancer to app servers, which read from a cache and database, and send click events to a queue and a stats worker">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>
+                <marker id="arrowV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>
+              </defs>
+              <rect class="dg-box" x="10" y="122" width="86" height="56" rx="10"/><text class="dg-text" x="53" y="150">Client</text>
+              <rect class="dg-box" x="130" y="122" width="96" height="56" rx="10"/><text class="dg-text" x="178" y="143">Load</text><text class="dg-text" x="178" y="161">balancer</text>
+              <rect class="dg-box hl" x="262" y="122" width="96" height="56" rx="10"/><text class="dg-text" x="310" y="143">App</text><text class="dg-text" x="310" y="161">servers</text>
+              <rect class="dg-box" x="420" y="20" width="126" height="56" rx="10"/><text class="dg-text" x="483" y="41">Cache</text><text class="dg-sub" x="483" y="59">hot codes</text>
+              <rect class="dg-box" x="420" y="122" width="126" height="56" rx="10"/><text class="dg-text" x="483" y="143">Database</text><text class="dg-sub" x="483" y="161">code → url</text>
+              <rect class="dg-box q" x="262" y="232" width="96" height="52" rx="10"/><text class="dg-text" x="310" y="258">Queue</text>
+              <rect class="dg-box q" x="420" y="232" width="126" height="52" rx="10"/><text class="dg-text" x="483" y="250">Stats worker</text><text class="dg-sub" x="483" y="268">click counts</text>
+              <path class="dg-edge" d="M96 150 H128"/>
+              <path class="dg-edge" d="M226 150 H260"/>
+              <path class="dg-edge" d="M358 140 C390 140 390 48 418 48"/>
+              <path class="dg-edge" d="M358 150 H418"/>
+              <path class="dg-edge async" d="M310 178 V230"/>
+              <path class="dg-edge async" d="M358 258 H418"/>
+              <text class="dg-label" x="372" y="80" style="text-anchor:end">cache first</text>
+              <text class="dg-label" x="389" y="142">miss</text>
+              <text class="dg-label" x="346" y="210">async</text>
+            </svg>
+          </div>
+          <aside class="notes"><p>Vocabulary to introduce lightly: load balancer, cache, index, queue, SQL vs NoSQL. The point is not the boxes, it is saying why each box is there and what it costs.</p></aside>
+        </section>
+
+        <!-- 25 · Practise articulation -->
+        <section class="slide" data-part="Practice" data-title="Articulation only comes with practice">
+          <div class="kicker"><b>07</b>Practice</div>
+          <h2 class="head">Clear communication is a skill: you only get it by <em>practising out loud</em></h2>
+          <div class="cols c3 stretch">
+            <div class="box f"><span class="tag">Alone</span><p class="small" style="margin-top:10px">Explain a project or a solution to your phone camera. Watch it back. Count the "ums" and the silent gaps.</p></div>
+            <div class="box f"><span class="tag accent">With friends</span><p class="small" style="margin-top:10px">Explain a problem to a friend who stops you every time they get lost.</p></div>
+            <div class="box violet f"><span class="tag violet">Mock interviews</span><p class="small" style="margin-top:10px">Groups of three: interviewer, candidate, observer. 30 minutes, then rotate.</p></div>
+          </div>
+          <div class="box f" style="margin-top:20px">
+            <h3>Observer's checklist</h3>
+            <div class="chips" style="margin-top:6px">
+              <span class="chip"><b>1</b>Answer first?</span>
+              <span class="chip"><b>2</b>Asked clarifying questions?</span>
+              <span class="chip"><b>3</b>Thought out loud?</span>
+              <span class="chip"><b>4</b>Named a trade-off?</span>
+              <span class="chip"><b>5</b>Honest about gaps?</span>
+              <span class="chip"><b>6</b>Tested the solution?</span>
+            </div>
+          </div>
+          <aside class="notes"><p>Suggest they start a weekly mock group this week. Nothing prepares you like being on the interviewer side for once.</p></aside>
+        </section>
+
+        <!-- 26 · AI as a coach -->
+        <section class="slide" data-part="Practice" data-title="Use AI as a coach, not a crutch">
+          <div class="kicker"><b>07</b>Practice</div>
+          <h2 class="head">Use AI as a <em>coach</em> that gives feedback, not a crutch that answers for you</h2>
+          <div class="cols wide-left">
+            <div class="box good">
+              <h3>Good uses</h3>
+              <ul class="ticks tight small">
+                <li class="f"><b>Polish answers:</b> write your own answer, ask for feedback on clarity and structure</li>
+                <li class="f"><b>Mock interviewer:</b> give it your CV and let it ask follow-up questions</li>
+                <li class="f"><b>Review your code</b> after you solve it: edge cases, complexity, naming</li>
+                <li class="f"><b>Explain back:</b> explain a pattern, ask what you got wrong</li>
+                <li class="f"><b>Research:</b> summarise a company's products and stack</li>
+              </ul>
+            </div>
+            <div class="stack">
+              <div class="prompt f">"Here is my answer to 'Tell me about your project'. Do not rewrite it. Tell me where an interviewer would get lost, and whether my answer comes first."</div>
+              <div class="box bad f">
+                <h3>Avoid</h3>
+                <ul class="ticks tight small">
+                  <li>Memorising AI-written scripts</li>
+                  <li>Letting it invent experience you do not have</li>
+                  <li>Practising only with autocomplete on</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <aside class="notes"><p>In the interview it is just you and your reasoning, so practise without assistance too. Also: interviewers can usually tell a rehearsed AI script from a real story.</p></aside>
+        </section>
+
+        <!-- 27 · Plan -->
+        <section class="slide" data-part="Practice" data-title="Your eight-week plan">
+          <div class="kicker"><b>07</b>Practice</div>
+          <h2 class="head">Start this week: an eight-week plan</h2>
+          <div class="cols c4 stretch">
+            <div class="box f"><span class="tag accent">Weeks 1 · 2</span><ul class="ticks tight small" style="margin-top:12px"><li>Refresh core DSA and complexity</li><li>Rewrite your CV project lines</li><li>Prepare each project in 4 layers</li></ul></div>
+            <div class="box f"><span class="tag accent">Weeks 3 · 6</span><ul class="ticks tight small" style="margin-top:12px"><li>Two patterns per week</li><li>Explain every solution aloud</li><li>One mock interview per week</li></ul></div>
+            <div class="box f"><span class="tag violet">Weeks 7 · 8</span><ul class="ticks tight small" style="margin-top:12px"><li>Timed mocks with feedback</li><li>System design basics</li><li>Three STAR stories ready</li></ul></div>
+            <div class="box good f"><span class="tag good">Before each interview</span><ul class="ticks tight small" style="margin-top:12px"><li>15 minutes of company research</li><li>Two questions to ask them</li><li>Re-read your own CV</li></ul></div>
+          </div>
+          <aside class="notes"><p>STAR stories to prepare: a technical challenge, a team conflict, a mistake or failure and what you learned.</p></aside>
+        </section>
+
+        <!-- 28 · Close -->
+        <section class="slide center" data-part="Wrap-up" data-title="They are hiring your thinking">
+          <div class="kicker"><b>✓</b>Wrap-up</div>
+          <p class="statement">They are not hiring your answer. They are hiring <span class="grad">how you think</span> and how you work with people.</p>
+          <div class="cols c3" style="margin-top:34px;width:100%">
+            <ul class="ticks tight small f"><li>A conversation, both ways</li><li>Research before you go</li></ul>
+            <ul class="ticks tight small f"><li>Your contribution, true and well told</li><li>Answer first, then reasons</li></ul>
+            <ul class="ticks tight small f"><li>Think aloud, name trade-offs</li><li>Practise out loud, every week</li></ul>
+          </div>
+          <p class="lead f" style="margin-top:30px">Questions?</p>
+          <aside class="notes"><p>Return to the opening: the candidate who got stuck, talked through it and took a hint, gets the job.</p></aside>
+        </section>
+
+      </div>
+      <div class="notes-panel" id="notesPanel" hidden></div>
+    </div>
+
+    <aside class="outline" id="outline" hidden>
+      <h2>Slides</h2>
+      <ol id="outlineList"></ol>
+    </aside>
+
+    <footer class="bar">
+      <div class="progress" id="progress"></div>
+      <a class="home" href="../index.html" title="All demos"><svg class="icon"><use href="#i-back"/></svg>Demos</a>
+      <span class="sep hide-sm"></span>
+      <div class="caption" id="caption"></div>
+      <button id="btnPrev" class="btn btn-icon" title="Previous (←)" aria-label="Previous"><svg class="icon"><use href="#i-left"/></svg></button>
+      <span class="counter" id="counter">1 / 1</span>
+      <button id="btnNext" class="btn btn-icon btn-primary" title="Next (→ or Space)" aria-label="Next"><svg class="icon"><use href="#i-right"/></svg></button>
+      <span class="sep"></span>
+      <button id="btnNotes" class="btn btn-icon btn-ghost" title="Speaker notes (N)" aria-label="Speaker notes"><svg class="icon"><use href="#i-notes"/></svg></button>
+      <button id="btnOutline" class="btn btn-icon btn-ghost" title="All slides (O)" aria-label="All slides"><svg class="icon"><use href="#i-sidebar"/></svg></button>
+      <button id="btnTheme" class="btn btn-icon btn-ghost theme-btn hide-sm" title="Light / dark (T)" aria-label="Toggle theme"><svg class="icon i-moon"><use href="#i-moon"/></svg><svg class="icon i-sun"><use href="#i-sun"/></svg></button>
+      <button id="btnFull" class="btn btn-icon btn-ghost" title="Fullscreen (F)" aria-label="Fullscreen"><svg class="icon"><use href="#i-expand"/></svg></button>
+      <button id="btnHelp" class="btn btn-icon btn-ghost" title="Help &amp; shortcuts (?)" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
+    </footer>
+  </div>
+
+  <div class="modal" id="help" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button class="btn btn-icon btn-ghost modal-close" id="btnHelpClose" aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      <h2 id="helpTitle">Presenting the interview prep deck</h2>
+      <div class="help-grid">
+        <section>
+          <h3>How to use it</h3>
+          <ul>
+            <li>Each press of <b>Next</b> reveals the next point on the slide, then moves to the next slide. A presentation clicker works too.</li>
+            <li><b>Speaker notes</b> (N) show talking points for the current slide. Hide them before projecting if you prefer.</li>
+            <li><b>All slides</b> (O) lists every slide by part. Click one to jump to it.</li>
+            <li>The address bar remembers the slide (for example <code>#12</code>), so a refresh keeps your place.</li>
+            <li>Every headline is the answer, with the supporting points under it: the same "answer first" habit the session teaches.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Keyboard</h3>
+          <table class="keys">
+            <tr><td><span class="kbd">→</span> <span class="kbd">Space</span> <span class="kbd">PgDn</span></td><td>Next point or slide</td></tr>
+            <tr><td><span class="kbd">←</span> <span class="kbd">PgUp</span></td><td>Previous</td></tr>
+            <tr><td><span class="kbd">↓</span> <span class="kbd">↑</span></td><td>Whole slide forward / back</td></tr>
+            <tr><td><span class="kbd">Home</span> <span class="kbd">End</span></td><td>First / last slide</td></tr>
+            <tr><td><span class="kbd">N</span></td><td>Speaker notes</td></tr>
+            <tr><td><span class="kbd">O</span></td><td>All slides</td></tr>
+            <tr><td><span class="kbd">F</span> <span class="kbd">T</span></td><td>Fullscreen · theme</td></tr>
+            <tr><td><span class="kbd">?</span></td><td>This help</td></tr>
+          </table>
+        </section>
+      </div>
+      <p class="credit">Created by <b data-author></b></p>
+    </div>
+  </div>
+
+  <script src="../shared/shell.js"></script>
+  <script src="interview.js"></script>
+</body>
+</html>

@@ -6,8 +6,9 @@ Interactive teaching canvases by Dinuka Kodithuwakku, hosted on GitHub Pages
 ## Structure
 - One folder per demo: `<demo>/index.html` plus its own `.css` and `.js` files.
 - Every demo is linked as a card from the root `index.html` hub, inside the
-  right category section: **Database Systems (DBMS)** (`#cat-dbms`) or
-  **Data Structures & Algorithms** (`#cat-dsa`). Update the section's
+  right category section: **Database Systems (DBMS)** (`#cat-dbms`),
+  **Data Structures & Algorithms** (`#cat-dsa`) or
+  **Career Skills** (`#cat-career`, talks and slide decks such as `interview-prep/`). Update the section's
   "N demos" count when adding a card. A new subject area gets its own section
   with the same `.cat` / `.cat-head` / `.cat-badge` markup.
 - Shared look and helpers live in `shared/theme.css` (color tokens, light/dark)

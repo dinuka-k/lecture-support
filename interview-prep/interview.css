@@ -262,6 +262,8 @@ body { height: 100%; overflow: hidden; }
 .anchor .main small { display: block; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; }
 .anchor .facts { display: grid; gap: 10px; position: relative; }
 .anchor .fact { position: relative; padding: 13px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); font-size: 19px; }
+.anchor.compact .facts { gap: 8px; }
+.anchor.compact .fact { padding: 8px 18px; }
 .anchor .fact::before { content: ""; position: absolute; left: -22px; top: 50%; width: 22px; border-top: 2px solid var(--line-strong); }
 
 /* Pattern grid */
